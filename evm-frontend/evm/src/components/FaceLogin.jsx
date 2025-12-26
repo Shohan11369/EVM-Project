@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as faceapi from "face-api.js";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, ScanFace, Loader2, IdCard } from "lucide-react";
+import { ShieldCheck, Loader2, IdCard } from "lucide-react";
 
 function FaceLogin({ onLoginSuccess }) {
   const videoRef = useRef(null);
@@ -10,130 +10,144 @@ function FaceLogin({ onLoginSuccess }) {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const navigate = useNavigate();
 
-  const playIllegalSound = () => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    let count = 0;
-    const interval = setInterval(() => {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.type = "sawtooth";
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime); 
-      oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.8);
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.8);
-      count++;
-      if (count >= 10) clearInterval(interval);
-    }, 1000);
+  // 🔊 Audio Helper
+  const playSound = (type) => {
+    const audio = new Audio(type === "success" ? "/success.mp3" : "/error.mp3");
+    audio.play().catch(err => console.log("Sound play error (Check if files exist in public folder):", err));
   };
 
   useEffect(() => {
     const loadModels = async () => {
       const MODEL_URL = "/models";
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      ]);
-      setModelsLoaded(true);
+      try {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        setModelsLoaded(true);
+      } catch (err) {
+        console.error("Models failed to load", err);
+      }
     };
     loadModels();
+
     navigator.mediaDevices.getUserMedia({ video: true })
-      .then((stream) => { if (videoRef.current) videoRef.current.srcObject = stream; });
+      .then((stream) => { 
+        if (videoRef.current) videoRef.current.srcObject = stream; 
+      });
+
     return () => videoRef.current?.srcObject?.getTracks().forEach((t) => t.stop());
   }, []);
 
-  const handleLogin = async () => {
-    
-    if (!voterIdInput) {
-      return alert("দয়া করে আপনার ভোটার আইডি (যেমন: DHK-****) প্রদান করুন।");
-    }
+  // Automatic face detection logic
+  useEffect(() => {
+    let interval;
+    if (modelsLoaded && voterIdInput.length >= 3 && !loading) {
+      interval = setInterval(async () => {
+        if (!videoRef.current) return;
 
+        const detection = await faceapi.detectSingleFace(
+          videoRef.current, 
+          new faceapi.TinyFaceDetectorOptions()
+        ).withFaceLandmarks().withFaceDescriptor();
+
+        if (detection) {
+          clearInterval(interval);
+          handleAutoLogin(detection.descriptor);
+        }
+      }, 1500);
+    }
+    return () => clearInterval(interval);
+  }, [modelsLoaded, voterIdInput, loading]);
+
+  const handleAutoLogin = async (descriptor) => {
     setLoading(true);
-    const detection = await faceapi.detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-
-    if (!detection) {
-      setLoading(false);
-      return alert("Face not recognized. Please look directly at the camera.");
-    }
-
     try {
       const res = await fetch("http://localhost:5000/api/voter/face-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          voterId: voterIdInput.toUpperCase(), // input
-          descriptor: Array.from(detection.descriptor) 
+          voterId: voterIdInput.toUpperCase(), 
+          descriptor: Array.from(descriptor) 
         }),
       });
 
       const data = await res.json();
-      setLoading(false);
 
       if (data.success) {
-        onLoginSuccess(data.voterId);
+        playSound("success");
+        onLoginSuccess(data.voter); 
         navigate("/vote"); 
       } else {
-        playIllegalSound();
-        setTimeout(() => {
-            alert(data.message || "Illegal Attempt detected!");
-        }, 300);
+        playSound("error");
+        // Alert and then Force Redirect to clear everything
+        alert(data.message || "Security Alert: Face mismatch or you have already voted!");
+        window.location.replace("/"); 
       }
     } catch (error) {
-      setLoading(false);
-      alert("Server Error!");
+      console.error("Login Error:", error);
+      playSound("error");
+      alert("Connection Error: Please ensure the server is running.");
+      window.location.replace("/");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-teal-100 p-4">
-      <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full text-center border border-white">
-        <div className="inline-flex p-3 rounded-full bg-green-100 text-green-600 mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-4">
+      <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full text-center">
+        <div className="inline-flex p-3 rounded-full bg-indigo-100 text-indigo-600 mb-4">
           <ShieldCheck size={32} />
         </div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">Login to Vote</h2>
-        <p className="text-gray-500 mb-6">Enter ID and scan face to proceed</p>
+        <h2 className="text-2xl font-black text-gray-800">Biometric Authentication</h2>
+        <p className="text-gray-500 mb-6">Enter ID to begin facial scanning</p>
 
-        {/* Voter ID Input Field */}
+        {/* Voter ID Input */}
         <div className="relative mb-6">
           <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input 
             type="text"
-            placeholder="Enter Voter ID (e.g. DHK-****)"
-            className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-green-500 outline-none transition-all font-bold text-gray-700"
+            placeholder="Enter Voter ID"
+            className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-indigo-500 outline-none font-bold transition-all"
             value={voterIdInput}
             onChange={(e) => setVoterIdInput(e.target.value)}
+            disabled={loading}
           />
         </div>
         
-        <div className="relative group mb-8">
-          <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-teal-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-          <div className="relative overflow-hidden rounded-2xl bg-black aspect-square border-4 border-white shadow-xl">
-            <video ref={videoRef} autoPlay muted className="w-full h-full object-cover scale-x-[-1]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-400/20 to-transparent h-1/4 w-full animate-[scan_2s_linear_infinite] border-b-2 border-green-400"></div>
-          </div>
+        {/* Camera Preview */}
+        <div className="relative overflow-hidden rounded-2xl bg-black aspect-square border-4 border-white shadow-xl mb-6">
+          <video ref={videoRef} autoPlay muted className="w-full h-full object-cover scale-x-[-1]" />
+          {loading && (
+            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white backdrop-blur-sm">
+              <Loader2 className="animate-spin mb-2" size={40} />
+              <p className="font-bold">Verifying Identity...</p>
+            </div>
+          )}
+          
+          {/* Scanning Line Animation */}
+          {!loading && voterIdInput.length >= 3 && (
+            <div className="absolute inset-x-0 top-0 h-1 bg-indigo-400 animate-[scan_2s_linear_infinite] shadow-[0_0_15px_#6366f1]"></div>
+          )}
         </div>
 
-        <button 
-          onClick={handleLogin} 
-          disabled={!modelsLoaded || loading}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 disabled:bg-gray-400"
-        >
-          {loading ? <Loader2 className="animate-spin" /> : <ScanFace />}
-          {loading ? "Verifying..." : "Verify & Login"}
-        </button>
+        {/* Status Indicator */}
+        <div className={`py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+          voterIdInput.length < 3 ? "bg-gray-100 text-gray-600" : "bg-indigo-100 text-indigo-700"
+        }`}>
+          {voterIdInput.length < 3 ? "Please enter your Voter ID" : "Scanning... Keep your face steady"}
+        </div>
       </div>
 
       <style>{`
-        @keyframes scan {
-          0% { top: -25%; }
-          100% { top: 100%; }
+        @keyframes scan { 
+          0% { top: 0%; } 
+          50% { top: 100%; }
+          100% { top: 0%; } 
         }
       `}</style>
     </div>
   );
 }
+
 export default FaceLogin;

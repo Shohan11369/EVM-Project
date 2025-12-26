@@ -1,199 +1,176 @@
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Avatar,
-  Grid,
-  Box,
-  Container,
-  Paper,
-} from "@mui/material";
-import { CheckCircle, HowToVote } from "@mui/icons-material";
+import React, { useState, useEffect, useRef } from "react";
+import * as faceapi from "face-api.js";
+import { Card, CardContent, Typography, Button, Grid, Box, Container, Paper, Avatar, Badge } from "@mui/material";
+import { CheckCircle, GppBad, VerifiedUser } from "@mui/icons-material";
 
-function Vote({ voterId }) {
+function Vote({ voterData }) {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [isFaceMatched, setIsFaceMatched] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const videoRef = useRef(null);
+  const monitorIntervalRef = useRef(null);
 
-  const candidates = [
-    {
-      id: 1,
-      name: "Bangladesh Awami League",
-      image: "https://via.placeholder.com/150",
-      symbolImage: "/images/boat.jpg",
-      symbolName: "Boat",
-    },
-    {
-      id: 2,
-      name: "Bangladesh Nationalist Party (BNP)",
-      image: "https://via.placeholder.com/150",
-      symbolImage: "/images/BNP.png",
-      symbolName: "Sheaf of Paddy",
-    },
-    {
-      id: 3,
-      name: "Jatiya Party (Ershad)",
-      image: "https://via.placeholder.com/150",
-      symbolImage: "/images/jatio.png",
-      symbolName: "Plough",
-    },
-    {
-      id: 4,
-      name: "Bangladesh Jamaat-e-Islami",
-      image: "https://via.placeholder.com/150",
-      symbolImage: "/images/jamat.png",
-      symbolName: "Scales",
-    },
-    {
-      id: 5,
-      name: "Islami Andolan Bangladesh",
-      image: "https://via.placeholder.com/150",
-      symbolImage: "/images/p.jpg",
-      symbolName: "Hand Fan",
-    },
-    {
-      id: 6,
-      name: "NCP",
-      image: "https://via.placeholder.com/150",
-      symbolImage: "/images/ncp.png",
-      symbolName: "Star",
-    },
-  ];
+  useEffect(() => {
+    // Access camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((s) => { if (videoRef.current) videoRef.current.srcObject = s; });
 
-  const handleVote = async () => {
-    if (!selectedCandidate)
-      return alert("Please select a candidate before voting!");
-    if (
-      !window.confirm(`Are you sure you want to vote for ${selectedCandidate}?`)
-    )
-      return;
+    // Live monitoring to ensure the same person stays in front of the camera
+    const startMonitoring = () => {
+      monitorIntervalRef.current = setInterval(async () => {
+        if (videoRef.current && videoRef.current.readyState === 4) {
+          const detection = await faceapi.detectSingleFace(
+            videoRef.current, 
+            new faceapi.TinyFaceDetectorOptions()
+          ).withFaceLandmarks().withFaceDescriptor();
 
-    const res = await fetch("http://localhost:5000/api/voter/vote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voterId, candidate: selectedCandidate }),
-    });
+          if (!detection) {
+            handleSecurityLogout("Security Alert: Face not detected! Logging out for security.");
+            return;
+          }
 
-    const data = await res.json();
-    setTimeout(() => {
-      alert(data.message);
-      if (data.success) window.location.href = "/";
-    }, 500);
+          if (voterData?.faceEncoding) {
+            const distance = faceapi.euclideanDistance(
+              detection.descriptor, 
+              new Float32Array(voterData.faceEncoding)
+            );
+            // If the face changes during voting
+            if (distance > 0.6) {
+              handleSecurityLogout("Security Alert: Face mismatch detected!");
+            }
+          }
+        }
+      }, 1500);
+    };
+
+    startMonitoring();
+    return () => clearInterval(monitorIntervalRef.current);
+  }, [voterData]);
+
+  const handleSecurityLogout = (message) => {
+    clearInterval(monitorIntervalRef.current);
+    setIsFaceMatched(false);
+    alert(message);
+    window.location.replace("/");
   };
 
-  // card render
-  const renderCandidateCard = (candidate) => (
-    <Card
-      key={candidate.id}
-      onClick={() => setSelectedCandidate(candidate.name)}
-      className={`mb-4 cursor-pointer rounded-2xl border-2 transition-all duration-300 ${
-        selectedCandidate === candidate.name
-          ? "border-green-500 bg-green-50 shadow-lg scale-[1.02]"
-          : "border-transparent bg-gray-50 hover:bg-gray-100"
-      }`}
-      sx={{
-        height: 180, 
-        display: "flex",
-        alignItems: "center",
-      }}
-    >
-      <CardContent className="flex items-center gap-4 w-full p-4">
-        <Avatar
-          src={candidate.image}
-          sx={{ width: 120, height: 120 }}
-          className="border-2 border-white shadow-md"
-        />
+  // Submit vote
+  const handleVoteSubmission = async () => {
+    if (!selectedCandidate) {
+      alert("Please select a candidate first.");
+      return;
+    }
 
-        <Box className="flex-grow text-left">
-          <Typography
-            variant="h8"
-            className="font-bold text-gray-800 leading-tight"
-            sx={{
-              fontSize: "1rem",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {candidate.name}
-          </Typography>
-          <Typography variant="body2" className="text-gray-500 italic mt-2">
-            Symbol: {candidate.symbolName}
-          </Typography>
-        </Box>
+    const confirmCheck = window.confirm(`Are you sure you want to vote for ${selectedCandidate}?`);
+    if (!confirmCheck) return;
 
-        <Box className="flex flex-col items-center justify-center min-w-[100px]">
-          <img
-            src={candidate.symbolImage}
-            alt={candidate.symbolName}
-            className="w-20 h-20 object-contain mb-1"
-          />
-          {selectedCandidate === candidate.name ? (
-            <CheckCircle className="text-green-500" fontSize="small" />
-          ) : (
-            <div className="h-5 w-5" /> 
-          )}
-        </Box>
-      </CardContent>
-    </Card>
-  );
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/voter/vote", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          voterId: voterData.voterId, 
+          candidate: selectedCandidate 
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("Your vote has been submitted successfully. Thank you!");
+        window.location.replace("/"); // Auto logout after voting
+      } else {
+        alert(data.message || "Vote submission failed.");
+      }
+    } catch (err) {
+      console.error("Submission Error:", err);
+      alert("Server error! Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const candidates = [
+    { id: 1, name: "Awami League", symbol: "Boat", img: "/images/boat.jpg" },
+    { id: 2, name: "BNP", symbol: "Sheaf of Paddy", img: "/images/BNP.png" },
+    { id: 3, name: "Jatiya Party", symbol: "Plough", img: "/images/jatio.png" },
+    { id: 4, name: "Jamaat-e-Islami", symbol: "Scales", img: "/images/jamat.png" },
+    { id: 5, name: "Islami Andolan", symbol: "Hand Fan", img: "/images/p.jpg" },
+    { id: 6, name: "NCP", symbol: "Star", img: "/images/ncp.png" },
+  ];
 
   return (
-    <Container maxWidth="lg" className="py-10">
-      <Paper
-        elevation={0}
-        className="p-8 rounded-[2.5rem] bg-white/70 backdrop-blur-md shadow-2xl border border-white text-center"
-      >
-        <Typography variant="h3" className="font-black text-indigo-900 mb-2">
-          Electronic Ballot Paper
-        </Typography>
-        <Typography
-          variant="h6"
-          className="text-gray-500 mb-10 uppercase tracking-widest"
-        >
-          Voter ID:{" "}
-          <span className="text-indigo-600 font-black">{voterId}</span>
-        </Typography>
+    <Container maxWidth="lg" className="py-10 relative">
+      {/* 🔴 Full Screen Block if Face Match Fails */}
+      {!isFaceMatched && (
+        <div className="fixed inset-0 z-[2000] bg-red-900/95 flex flex-col items-center justify-center text-white text-center">
+          <GppBad sx={{ fontSize: 100, mb: 2 }} />
+          <Typography variant="h3">ACCESS DENIED!</Typography>
+          <Typography variant="h6">Security protocol triggered due to face mismatch.</Typography>
+        </div>
+      )}
 
-        <Grid container spacing={4}>
-          {/* Left Column (1, 2, 3) */}
-          <Grid item xs={12} md={6}>
-            {candidates.slice(0, 3).map(renderCandidateCard)}
-          </Grid>
-
-          {/* Right Column (4, 5, 6) */}
-          <Grid item xs={12} md={6}>
-            {candidates.slice(3, 6).map(renderCandidateCard)}
-          </Grid>
-        </Grid>
-
-        <Box className="mt-12">
-          <Button
-            onClick={handleVote}
-            variant="contained"
-            size="large"
-            startIcon={<HowToVote />}
-            sx={{
-              px: 10,
-              py: 2.5,
-              borderRadius: "5rem",
-              fontSize: "1.4rem",
-              fontWeight: "900",
-              textTransform: "none",
-              background: "linear-gradient(45deg, #1e1b4b, #4338ca)",
-              boxShadow: "0 15px 30px -10px rgba(67, 56, 202, 0.6)",
-              "&:hover": {
-                background: "#1e1b4b",
-                transform: "translateY(-2px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Confirm & Submit Vote
-          </Button>
+      {/* 👤 Voter Profile Section */}
+      <Paper elevation={10} className="p-6 bg-gradient-to-r from-indigo-900 to-blue-800 text-white mb-10 flex justify-between items-center rounded-[2rem] border-4 border-white/20">
+        <Box className="flex items-center gap-6">
+          <Badge overlap="circular" anchorOrigin={{ vertical: "bottom", horizontal: "right" }} badgeContent={<VerifiedUser color="success" />}>
+            <div className="w-28 h-28 rounded-full border-4 border-green-400 overflow-hidden bg-black shadow-lg">
+              <video ref={videoRef} autoPlay muted className="w-full h-full object-cover scale-x-[-1]" />
+            </div>
+          </Badge>
+          <Box>
+            <Typography variant="h4" className="font-black">{voterData.name}</Typography>
+            <Typography variant="h6" className="text-green-300">Voter ID: {voterData.voterId}</Typography>
+          </Box>
+        </Box>
+        <Box className="px-6 py-2 bg-white/10 rounded-full border border-white/20">
+          <Typography className="font-bold uppercase text-xs tracking-widest">Live Security Monitoring</Typography>
         </Box>
       </Paper>
+
+      {/* 🗳️ Candidate Grid */}
+      <Grid container spacing={3} className={!isFaceMatched ? "blur-3xl" : ""}>
+        {candidates.map((c) => (
+          <Grid item xs={12} md={6} key={c.id}>
+            <Card 
+              onClick={() => setSelectedCandidate(c.name)}
+              className={`cursor-pointer border-4 transition-all duration-300 rounded-[1.5rem] ${selectedCandidate === c.name ? "border-green-500 bg-green-50 shadow-xl" : "border-gray-100 hover:bg-gray-50"}`}
+            >
+              <CardContent className="flex items-center justify-between p-4">
+                <Box className="flex items-center gap-4">
+                  <Avatar src={c.img} variant="rounded" sx={{ width: 100, height: 100, borderRadius: 2, border: "2px solid #eee" }} />
+                  <Box>
+                    <Typography variant="h5" className="font-black text-gray-800">{c.name}</Typography>
+                    <Typography variant="subtitle1" className="text-gray-500 font-bold">Symbol: {c.symbol}</Typography>
+                  </Box>
+                </Box>
+                {selectedCandidate === c.name ? (
+                  <CheckCircle sx={{ fontSize: 40 }} className="text-green-500" />
+                ) : (
+                  <div className="w-8 h-8 border-4 border-gray-200 rounded-full" />
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* 🚀 Confirm Button */}
+      <Box className="text-center mt-12">
+        <Button
+          onClick={handleVoteSubmission}
+          disabled={!isFaceMatched || !selectedCandidate || isSubmitting}
+          variant="contained"
+          sx={{
+            px: 10, py: 2, borderRadius: "10rem", fontSize: "1.2rem", fontWeight: "900",
+            background: "linear-gradient(45deg, #1e1b4b, #4338ca)",
+            boxShadow: "0 10px 30px rgba(67, 56, 202, 0.4)",
+            "&:hover": { background: "linear-gradient(45deg, #4338ca, #1e1b4b)" }
+          }}
+        >
+          {isSubmitting ? "Processing..." : "Confirm My Vote"}
+        </Button>
+      </Box>
     </Container>
   );
 }
