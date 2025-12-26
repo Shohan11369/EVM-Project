@@ -10,7 +10,7 @@ import FaceLogin from "./components/FaceLogin";
 import Vote from "./components/Vote";
 import AdminDashboard from "./components/AdminDashboard";
 import AdminLayout from "./components/AdminLayout";
-import Home from "./components/Home"; // হোম পেজটি ইমপোর্ট করা হয়েছে
+import Home from "./components/Home"; 
 
 function App() {
   const [voterId, setVoterId] = useState(null);
@@ -18,10 +18,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* ল্যান্ডিং পেজ (সবার আগে এটি দেখাবে) */}
+        
         <Route path="/" element={<Home />} />
 
-        {/* ভোটারদের জন্য সেকশন */}
+        {/* Voter */}
         <Route
           path="/login"
           element={<FaceLogin onLoginSuccess={(id) => setVoterId(id)} />}
@@ -33,14 +33,14 @@ function App() {
           }
         />
 
-        {/* অ্যাডমিন প্যানেল সেকশন (Nested Routes) */}
+        {/* Admin panel*/}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="register" element={<Signup />} />
         </Route>
 
-        {/* ভুল কোনো ইউআরএল দিলে হোম পেজে নিয়ে যাবে */}
+        
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

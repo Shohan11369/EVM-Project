@@ -47,7 +47,7 @@ function FaceLogin({ onLoginSuccess }) {
   }, []);
 
   const handleLogin = async () => {
-    // ১. প্রথমে চেক করবে আইডি ইনপুট দিয়েছে কিনা
+    
     if (!voterIdInput) {
       return alert("দয়া করে আপনার ভোটার আইডি (যেমন: DHK-****) প্রদান করুন।");
     }
@@ -102,7 +102,7 @@ function FaceLogin({ onLoginSuccess }) {
           <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input 
             type="text"
-            placeholder="Enter Voter ID (e.g. DHK-1001)"
+            placeholder="Enter Voter ID (e.g. DHK-****)"
             className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-green-500 outline-none transition-all font-bold text-gray-700"
             value={voterIdInput}
             onChange={(e) => setVoterIdInput(e.target.value)}

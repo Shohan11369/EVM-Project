@@ -5,7 +5,7 @@ import { User, MapPin, Camera, Loader2 } from "lucide-react";
 
 function Signup() {
   const [name, setName] = useState("");
-  const [division, setDivision] = useState(""); // নতুন স্টেট
+  const [division, setDivision] = useState(""); 
   const [isRegistering, setIsRegistering] = useState(false);
   const videoRef = useRef(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -53,7 +53,7 @@ function Signup() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          division, // ব্যাকএন্ডে বিভাগ পাঠানো হচ্ছে
+          division, // send to backend
           faceEncoding: Array.from(detections.descriptor),
         }),
       });
@@ -62,7 +62,7 @@ function Signup() {
       setIsRegistering(false);
 
       if (data.success) {
-        // ভোটারকে তার নতুন আইডি জানিয়ে দেওয়া হচ্ছে
+        // new id name
         alert(`Registration Successful!\nYour Unique Voter ID is: ${data.voterId}\nPlease note it down for voting.`);
         navigate("/");
       } else {

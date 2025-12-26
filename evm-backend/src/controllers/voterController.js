@@ -4,7 +4,7 @@ function euclidean(a, b) {
   return Math.sqrt(a.reduce((sum, val, i) => sum + (val - b[i]) ** 2, 0));
 }
 
-// SIGNUP (With Auto-ID Logic) - আপনার আগের কোডটিই রাখা হয়েছে
+// SIGNUP (With Auto-ID Logic) 
 export const signupVoter = async (req, res) => {
   try {
     const { name, division, faceEncoding } = req.body;
@@ -16,7 +16,7 @@ export const signupVoter = async (req, res) => {
       });
     }
 
-    // ১. Security Check: ফেস আগে রেজিস্টার করা আছে কি না
+    // 1. Security Check
     const allVoters = await Voter.find({});
     for (let v of allVoters) {
       const dist = euclidean(v.faceEncoding, faceEncoding);
@@ -29,7 +29,7 @@ export const signupVoter = async (req, res) => {
       }
     }
 
-    // ২. Unique ID Generation Logic
+    // 2. Unique ID Generation Logic
     const divCode = division.substring(0, 3).toUpperCase();
     const lastVoter = await Voter.findOne({ division }).sort({ createdAt: -1 });
 
@@ -64,23 +64,23 @@ export const signupVoter = async (req, res) => {
 // FACE LOGIN (Updated: ID + Face Verification)
 export const faceLogin = async (req, res) => {
   try {
-    const { voterId, descriptor } = req.body; // ফ্রন্টএন্ড থেকে voterId এবং descriptor আসবে
+    const { voterId, descriptor } = req.body; //  voterId and descriptor from frontend
 
     if (!voterId || !descriptor) {
       return res.json({ success: false, message: "Voter ID and Face scan required" });
     }
 
-    // ১. ডাটাবেসে ওই আইডি-র ভোটার আছে কি না চেক করা
+    // ১. check voter id
     const voter = await Voter.findOne({ voterId: voterId.toUpperCase() });
 
     if (!voter) {
       return res.json({ success: false, message: "Invalid Voter ID! Voter not found." });
     }
 
-    // ২. এবার ওই ভোটারের ফেস এনকোডিং এর সাথে বর্তমান স্ক্যানের তুলনা করা
+    // 2. voter face encoding
     const dist = euclidean(voter.faceEncoding, descriptor);
 
-    // ৩. ফলাফল যাচাই (Distance < 0.6 হলে ম্যাচ)
+    // ৩. Result (Distance < 0.6 )
     if (dist < 0.6) {
       if (voter.hasVoted) {
         return res.json({
@@ -95,7 +95,7 @@ export const faceLogin = async (req, res) => {
         hasVoted: false,
       });
     } else {
-      // যদি আইডি ঠিক থাকে কিন্তু ফেস না মিলে
+      
       res.json({ success: false, message: "Face identity did not match with this ID!" });
     }
   } catch (err) {
