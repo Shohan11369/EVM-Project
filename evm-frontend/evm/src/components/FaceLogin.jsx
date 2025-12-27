@@ -5,39 +5,48 @@ import { ShieldCheck, Loader2, IdCard } from "lucide-react";
 
 function FaceLogin({ onLoginSuccess }) {
   const videoRef = useRef(null);
+  const streamRef = useRef(null); 
   const [voterIdInput, setVoterIdInput] = useState(""); 
   const [loading, setLoading] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const navigate = useNavigate();
 
-  // 🔊 Audio Helper
+  //  Audio Helper
   const playSound = (type) => {
     const audio = new Audio(type === "success" ? "/success.mp3" : "/error.mp3");
-    audio.play().catch(err => console.log("Sound play error (Check if files exist in public folder):", err));
+    audio.play().catch(err => console.log("Sound error:", err));
   };
 
   useEffect(() => {
-    const loadModels = async () => {
-      const MODEL_URL = "/models";
+    const init = async () => {
       try {
+        const MODEL_URL = "/models";
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
         setModelsLoaded(true);
+
+        //camera on 
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamRef.current = stream; 
+        if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
-        console.error("Models failed to load", err);
+        console.error("Camera error:", err);
       }
     };
-    loadModels();
+    init();
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then((stream) => { 
-        if (videoRef.current) videoRef.current.srcObject = stream; 
-      });
-
-    return () => videoRef.current?.srcObject?.getTracks().forEach((t) => t.stop());
+    
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => {
+          track.stop(); // camera hardware on
+        });
+        console.log("Login Camera Stopped Successfully");
+      }
+    };
   }, []);
 
   // Automatic face detection logic
@@ -81,14 +90,11 @@ function FaceLogin({ onLoginSuccess }) {
         navigate("/vote"); 
       } else {
         playSound("error");
-        // Alert and then Force Redirect to clear everything
-        alert(data.message || "Security Alert: Face mismatch or you have already voted!");
+        alert(data.message || "Security Alert!");
         window.location.replace("/"); 
       }
     } catch (error) {
-      console.error("Login Error:", error);
-      playSound("error");
-      alert("Connection Error: Please ensure the server is running.");
+      alert("Connection Error!");
       window.location.replace("/");
     }
   };
@@ -102,7 +108,6 @@ function FaceLogin({ onLoginSuccess }) {
         <h2 className="text-2xl font-black text-gray-800">Biometric Authentication</h2>
         <p className="text-gray-500 mb-6">Enter ID to begin facial scanning</p>
 
-        {/* Voter ID Input */}
         <div className="relative mb-6">
           <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input 
@@ -115,7 +120,6 @@ function FaceLogin({ onLoginSuccess }) {
           />
         </div>
         
-        {/* Camera Preview */}
         <div className="relative overflow-hidden rounded-2xl bg-black aspect-square border-4 border-white shadow-xl mb-6">
           <video ref={videoRef} autoPlay muted className="w-full h-full object-cover scale-x-[-1]" />
           {loading && (
@@ -125,13 +129,11 @@ function FaceLogin({ onLoginSuccess }) {
             </div>
           )}
           
-          {/* Scanning Line Animation */}
           {!loading && voterIdInput.length >= 3 && (
             <div className="absolute inset-x-0 top-0 h-1 bg-indigo-400 animate-[scan_2s_linear_infinite] shadow-[0_0_15px_#6366f1]"></div>
           )}
         </div>
 
-        {/* Status Indicator */}
         <div className={`py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
           voterIdInput.length < 3 ? "bg-gray-100 text-gray-600" : "bg-indigo-100 text-indigo-700"
         }`}>

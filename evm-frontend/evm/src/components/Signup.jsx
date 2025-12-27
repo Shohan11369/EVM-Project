@@ -5,16 +5,18 @@ import { User, MapPin, Camera, Loader2, CreditCard, Home } from "lucide-react";
 
 function Signup() {
   const [name, setName] = useState("");
-  const [nidNumber, setNidNumber] = useState(""); 
-  const [address, setAddress] = useState(""); 
-  const [division, setDivision] = useState(""); 
+  const [nidNumber, setNidNumber] = useState("");
+  const [address, setAddress] = useState("");
+  const [division, setDivision] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const videoRef = useRef(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadModels = async () => {
+    let signupStream = null;
+
+    const loadModelsAndStartCamera = async () => {
       try {
         const MODEL_URL = "/models";
         await Promise.all([
@@ -23,49 +25,67 @@ function Signup() {
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
         setModelsLoaded(true);
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        signupStream = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
-        console.error("Model load error:", err);
+        console.error("Setup error:", err);
       }
     };
-    loadModels();
-    
-    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    });
 
-    return () =>
-      videoRef.current?.srcObject?.getTracks().forEach((t) => t.stop());
+    loadModelsAndStartCamera();
+
+    return () => {
+      if (signupStream) {
+        signupStream.getTracks().forEach((track) => track.stop());
+      }
+    };
   }, []);
 
   const handleSignup = async () => {
-    // Basic validation
     if (!name || !nidNumber || !address || !division) {
-      return alert("Please provide all required information (Name, ID, Address, and Division).");
+      return alert("Please provide all required information.");
     }
 
     setIsRegistering(true);
-    
-    // Face scanning
-    const detections = await faceapi
-      .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
-      .withFaceDescriptor();
-
-    if (!detections) {
-      setIsRegistering(false);
-      return alert("Face not detected! Please ensure you are in a well-lit area and facing the camera.");
-    }
 
     try {
+      // 1. face detect 
+      const detections = await faceapi
+        .detectSingleFace(
+          videoRef.current,
+          new faceapi.TinyFaceDetectorOptions()
+        )
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detections) {
+        setIsRegistering(false);
+        return alert("Face not detected! Please face the camera.");
+      }
+
+      // 2. Image capture from video
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const capturedImage = canvas.toDataURL("image/jpeg");
+
+      // 3. Data send backend
       const res = await fetch("http://localhost:5000/api/voter/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          voterId: nidNumber.toUpperCase(), 
+          voterId: nidNumber.toUpperCase(),
           address,
           division,
           faceEncoding: Array.from(detections.descriptor),
+          image: capturedImage,
         }),
       });
 
@@ -80,24 +100,27 @@ function Signup() {
       }
     } catch (error) {
       setIsRegistering(false);
-      alert("Server Error! Please check your backend connection.");
+      console.error("Signup Error:", error);
+      alert("Server Error! Make sure your backend is running.");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-4">
       <div className="bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl max-w-lg w-full border border-white">
-        
         <div className="text-center mb-6">
           <div className="inline-flex p-3 rounded-2xl bg-indigo-600 text-white mb-4 shadow-lg shadow-indigo-200">
             <User size={28} />
           </div>
-          <h2 className="text-3xl font-black text-gray-800 tracking-tight">Voter Registration</h2>
-          <p className="text-gray-500 text-sm mt-1 font-semibold uppercase tracking-widest">Biometric Enrollment System</p>
+          <h2 className="text-3xl font-black text-gray-800 tracking-tight">
+            Voter Registration
+          </h2>
+          <p className="text-gray-500 text-sm mt-1 font-semibold uppercase tracking-widest">
+            Biometric Enrollment System
+          </p>
         </div>
 
         <div className="space-y-4">
-          {/* Full Name */}
           <div className="relative">
             <User className="absolute left-4 top-3.5 text-indigo-400 size-5" />
             <input
@@ -109,7 +132,6 @@ function Signup() {
             />
           </div>
 
-          {/* NID/Voter ID */}
           <div className="relative">
             <CreditCard className="absolute left-4 top-3.5 text-indigo-400 size-5" />
             <input
@@ -121,7 +143,6 @@ function Signup() {
             />
           </div>
 
-          {/* Full Address */}
           <div className="relative">
             <Home className="absolute left-4 top-4 text-indigo-400 size-5" />
             <textarea
@@ -132,7 +153,6 @@ function Signup() {
             />
           </div>
 
-          {/* Division Select */}
           <div className="relative">
             <MapPin className="absolute left-4 top-3.5 text-indigo-400 size-5" />
             <select
@@ -152,7 +172,6 @@ function Signup() {
             </select>
           </div>
 
-          {/* Camera Preview */}
           <div className="relative overflow-hidden rounded-3xl border-4 border-white bg-black aspect-video shadow-2xl">
             <video
               ref={videoRef}
@@ -160,18 +179,19 @@ function Signup() {
               muted
               className="w-full h-full object-cover scale-x-[-1]"
             />
-            {/* Scanning UI overlay */}
-            <div className="absolute inset-0 bg-indigo-500/5 pointer-events-none"></div>
             <div className="absolute inset-x-0 top-0 h-1 bg-indigo-400 shadow-[0_0_20px_#818cf8] animate-[scan_3s_linear_infinite]"></div>
           </div>
 
-          {/* Submit Button */}
           <button
             onClick={handleSignup}
             disabled={!modelsLoaded || isRegistering}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70"
           >
-            {isRegistering ? <Loader2 className="animate-spin" /> : <Camera className="size-6" />}
+            {isRegistering ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Camera className="size-6" />
+            )}
             {isRegistering ? "ENROLLING BIOMETRICS..." : "REGISTER VOTER"}
           </button>
         </div>
