@@ -38,11 +38,16 @@ function Signup() {
 
     loadModelsAndStartCamera();
 
+    // logic of camera off
     return () => {
       if (signupStream) {
-        signupStream.getTracks().forEach((track) => track.stop());
+        signupStream.getTracks().forEach((track) => {
+          track.stop(); 
+        });
+        console.log("Signup camera stopped successfully.");
       }
     };
+    
   }, []);
 
   const handleSignup = async () => {
@@ -53,7 +58,7 @@ function Signup() {
     setIsRegistering(true);
 
     try {
-      // 1. face detect 
+      // 1. face detect
       const detections = await faceapi
         .detectSingleFace(
           videoRef.current,

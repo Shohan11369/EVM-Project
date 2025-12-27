@@ -91,11 +91,11 @@ function FaceLogin({ onLoginSuccess }) {
       } else {
         playSound("error");
         alert(data.message || "Security Alert!");
-        window.location.replace("/"); 
+        window.location.replace("/login"); 
       }
     } catch (error) {
       alert("Connection Error!");
-      window.location.replace("/");
+      window.location.replace("/login");
     }
   };
 

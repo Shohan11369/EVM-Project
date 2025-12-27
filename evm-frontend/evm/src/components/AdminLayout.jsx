@@ -3,6 +3,15 @@ import { Link, Outlet } from "react-router-dom";
 import { LayoutDashboard, Users, UserPlus, LogOut } from "lucide-react";
 
 const AdminLayout = () => {
+  // logout time auto off camera
+  const handleLogout = () => {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        stream.getTracks().forEach(track => track.stop());
+      })
+      .catch(() => {});
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -16,7 +25,7 @@ const AdminLayout = () => {
             to="/admin/dashboard"
             className="flex items-center gap-3 hover:bg-black p-3 rounded-xl transition"
           >
-            <LayoutDashboard size={50} />
+            <LayoutDashboard size={24} /> 
             Live Results (লাইভ রেজাল্ট)
           </Link>
 
@@ -24,15 +33,16 @@ const AdminLayout = () => {
             to="/admin/register"
             className="flex items-center gap-3 hover:bg-black p-3 rounded-xl transition"
           >
-            <UserPlus size={50} />
+            <UserPlus size={24} />
             Voter Registration (ভোটার এন্ট্রি)
           </Link>
 
           <Link
             to="/"
+            onClick={handleLogout} 
             className="flex items-center gap-3 hover:bg-red-700 p-3 rounded-xl mt-20 transition text-red-100"
           >
-            <LogOut size={50} />
+            <LogOut size={24} />
             Logout (লগআউট)
           </Link>
         </nav>

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, ShieldCheck, Lock, X } from "lucide-react";
+import { User, ShieldCheck, Lock, X, Eye, EyeOff } from "lucide-react";
 
 function Home() {
   const navigate = useNavigate();
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminId, setAdminId] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -94,7 +95,10 @@ function Home() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 relative shadow-2xl animate-in zoom-in duration-200">
             <button
-              onClick={() => setShowAdminModal(false)}
+              onClick={() => {
+                setShowAdminModal(false);
+                setShowPassword(false);
+              }}
               className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
             >
               <X size={24} />
@@ -117,13 +121,24 @@ function Home() {
                 className="w-full px-4 py-3 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 outline-none font-bold"
                 onChange={(e) => setAdminId(e.target.value)}
               />
-              <input
-                type="password"
-                placeholder="Password"
-                required
-                className="w-full px-4 py-3 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 outline-none font-bold"
-                onChange={(e) => setPassword(e.target.value)}
-              />
+
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  required
+                  className="w-full pl-4 pr-12 py-3 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 outline-none font-bold"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+
               <button
                 type="submit"
                 className="w-full bg-purple-600 text-white py-4 rounded-xl font-black hover:bg-purple-700 transition shadow-lg"
