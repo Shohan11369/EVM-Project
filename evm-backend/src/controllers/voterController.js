@@ -46,7 +46,7 @@ export const signupVoter = async (req, res) => {
     const allVoters = await Voter.find({});
     for (let v of allVoters) {
       const dist = euclidean(v.faceEncoding, faceEncoding);
-      if (dist < 0.6) {
+      if (dist < 0.45) {
         return res.json({
           success: false,
           message: "Biometric Error: Face already registered!",
@@ -80,7 +80,6 @@ export const faceLogin = async (req, res) => {
     if (!descriptor)
       return res.json({ success: false, message: "Face data is required." });
 
-    
     const allVoters = await Voter.find({});
     if (allVoters.length === 0) {
       return res.json({
@@ -90,7 +89,7 @@ export const faceLogin = async (req, res) => {
     }
 
     let matchedVoter = null;
-    let minDistance = 0.5; 
+    let minDistance = 0.5;
 
     for (let voter of allVoters) {
       const dist = euclidean(voter.faceEncoding, descriptor);
@@ -115,7 +114,6 @@ export const faceLogin = async (req, res) => {
         message: `Hello ${matchedVoter.name}, you have already cast your vote!`,
       });
     }
-
 
     return res.json({ success: true, voter: matchedVoter });
   } catch (err) {

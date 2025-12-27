@@ -10,7 +10,7 @@ import {
   Home,
   Phone,
   Hash,
-  CheckCircle, 
+  CheckCircle,
 } from "lucide-react";
 
 function Signup() {
@@ -50,7 +50,7 @@ function Signup() {
     loadModelsAndStartCamera();
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.cuarrent.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
@@ -74,11 +74,13 @@ function Signup() {
       const detections = await faceapi
         .detectSingleFace(
           videoRef.current,
-          new faceapi.TinyFaceDetectorOptions()
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 512, 
+            scoreThreshold: 0.5, 
+          })
         )
         .withFaceLandmarks()
         .withFaceDescriptor();
-
       if (!detections) {
         setIsRegistering(false);
         return alert("Face not detected! Please face the camera.");
