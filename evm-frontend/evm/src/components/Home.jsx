@@ -65,7 +65,7 @@ function Home() {
           <h2 className="text-3xl font-black text-gray-800 mb-2">
             Voter Login
           </h2>
-          <p className="text-gray-600 font-medium italic">
+          <p className="text-gray-600 font-medium ">
             Cast your vote using Face Verification
           </p>
         </div>
@@ -84,7 +84,7 @@ function Home() {
           <h2 className="text-3xl font-black text-gray-800 mb-2">
             Admin Panel
           </h2>
-          <p className="text-gray-600 font-medium italic">
+          <p className="text-gray-600 font-medium ">
             Manage results and voter database
           </p>
         </div>
