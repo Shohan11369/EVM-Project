@@ -93,12 +93,12 @@ function FaceLogin({ onLoginSuccess }) {
 
       if (data.success) {
         playSound("success");
-        stopCamera(); 
+        stopCamera();
         onLoginSuccess(data.voter);
         navigate("/vote");
       } else {
         playSound("error");
-        setLoading(false); 
+        setLoading(false);
         alert(data.message || "Face not recognized!");
       }
     } catch (error) {

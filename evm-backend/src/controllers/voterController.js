@@ -18,7 +18,6 @@ export const signupVoter = async (req, res) => {
       image,
     } = req.body;
 
-    // Validate Inputs (Updated with new fields)
     if (
       !name ||
       !voterId ||
@@ -31,8 +30,7 @@ export const signupVoter = async (req, res) => {
     ) {
       return res.json({
         success: false,
-        message:
-          "Please provide all required fields including Mobile and Post Code.",
+        message: "Please provide all required fields.",
       });
     }
 
@@ -59,14 +57,13 @@ export const signupVoter = async (req, res) => {
     const voter = new Voter({
       name,
       voterId,
-      mobile, // Save Mobile Number
-      postCode, // Save Post Code
+      mobile,
+      postCode,
       address,
       division,
       faceEncoding,
       image,
     });
-
     await voter.save();
     res.json({ success: true, message: "Voter record saved successfully!" });
   } catch (err) {
@@ -76,21 +73,24 @@ export const signupVoter = async (req, res) => {
   }
 };
 
-// 2. Face Login (Match face without ID)
+// 2. Face Login
 export const faceLogin = async (req, res) => {
   try {
     const { descriptor } = req.body;
+    if (!descriptor)
+      return res.json({ success: false, message: "Face data is required." });
 
-    if (!descriptor) {
+    
+    const allVoters = await Voter.find({});
+    if (allVoters.length === 0) {
       return res.json({
         success: false,
-        message: "Face data is required for login.",
+        message: "No registered voters found. Please register first!",
       });
     }
 
-    const allVoters = await Voter.find({});
     let matchedVoter = null;
-    let minDistance = 0.6;
+    let minDistance = 0.5; 
 
     for (let voter of allVoters) {
       const dist = euclidean(voter.faceEncoding, descriptor);
@@ -100,19 +100,22 @@ export const faceLogin = async (req, res) => {
       }
     }
 
+    //  If don't match face
     if (!matchedVoter) {
       return res.json({
         success: false,
-        message: "Face not recognized! Please register first.",
+        message: "Face not recognized! Please register your face.",
       });
     }
 
+    // match but already voted
     if (matchedVoter.hasVoted) {
       return res.json({
         success: false,
-        message: "Access Denied: You have already cast your vote!",
+        message: `Hello ${matchedVoter.name}, you have already cast your vote!`,
       });
     }
+
 
     return res.json({ success: true, voter: matchedVoter });
   } catch (err) {
@@ -137,10 +140,7 @@ export const submitVote = async (req, res) => {
       { voterId },
       { hasVoted: true, votedFor: candidate }
     );
-    res.json({
-      success: true,
-      message: "Your vote has been recorded successfully.",
-    });
+    res.json({ success: true, message: "Vote recorded successfully." });
   } catch (err) {
     res
       .status(500)
@@ -179,5 +179,18 @@ export const adminLogin = async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// 6. Get All Voters
+export const getAllVoters = async (req, res) => {
+  try {
+    const voters = await Voter.find({}).sort({ createdAt: -1 });
+    res.json({ success: true, voters });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching voters: " + err.message,
+    });
   }
 };

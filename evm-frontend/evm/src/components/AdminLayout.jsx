@@ -29,6 +29,15 @@ const AdminLayout = () => {
             Live Results (লাইভ রেজাল্ট)
           </Link>
 
+          {/* Voter List Link - নতুন যোগ করা হয়েছে */}
+          <Link
+            to="/admin/voters"
+            className="flex items-center gap-3 hover:bg-black p-3 rounded-xl transition"
+          >
+            <Users size={24} />
+            Voter List (ভোটার তালিকা)
+          </Link>
+
           <Link
             to="/admin/register"
             className="flex items-center gap-3 hover:bg-black p-3 rounded-xl transition"

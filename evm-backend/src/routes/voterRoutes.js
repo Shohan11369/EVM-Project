@@ -4,18 +4,17 @@ import {
   faceLogin,
   submitVote,
   getResults,
-  adminLogin 
+  adminLogin,
+  getAllVoters,
 } from "../controllers/voterController.js";
 
 const router = express.Router();
 
-// VOTER ROUTES
 router.post("/register", signupVoter);
 router.post("/face-login", faceLogin);
 router.post("/vote", submitVote);
 router.get("/results", getResults);
-
-// ADMIN ROUTE 
-router.post("/admin-login", adminLogin); 
+router.get("/all", getAllVoters); // Voter List Route
+router.post("/admin-login", adminLogin);
 
 export default router;

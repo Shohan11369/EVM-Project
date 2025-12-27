@@ -45,7 +45,7 @@ function AdminDashboard() {
       {/* Title */}
       <div className="flex items-center justify-between mb-8">
         <Typography variant="h4" className="font-black text-gray-800">
-          নির্বাচনী ড্যাশবোর্ড (Election Dashboard)
+          Election Dashboard (নির্বাচনী ড্যাশবোর্ড)
         </Typography>
 
         <div className="bg-indigo-100 text-black px-6 py-2 rounded-2xl font-bold flex items-center gap-2">
@@ -62,7 +62,7 @@ function AdminDashboard() {
             <div className="flex items-center gap-2 mb-8">
               <BarChart3 className="text-indigo-600" />
               <Typography variant="h6" className="font-bold">
-                লাইভ ভোটের ফলাফল গ্রাফ (Live Voting Result Chart)
+                Live Voting Result Chart ( লাইভ ভোটের ফলাফল গ্রাফ)
               </Typography>
             </div>
 

@@ -10,6 +10,7 @@ import {
   Home,
   Phone,
   Hash,
+  CheckCircle, 
 } from "lucide-react";
 
 function Signup() {
@@ -20,6 +21,8 @@ function Signup() {
   const [address, setAddress] = useState("");
   const [division, setDivision] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); // success message show
+
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -63,7 +66,10 @@ function Signup() {
     ) {
       return alert("Please provide all required information.");
     }
+
     setIsRegistering(true);
+    setShowSuccess(false);
+
     try {
       const detections = await faceapi
         .detectSingleFace(
@@ -102,9 +108,21 @@ function Signup() {
 
       const data = await res.json();
       setIsRegistering(false);
+
       if (data.success) {
         alert("Voter registered successfully!");
-        navigate("/");
+
+        // form restart
+        setName("");
+        setNidNumber("");
+        setMobileNumber("");
+        setPostCode("");
+        setAddress("");
+        setDivision("");
+
+        // success message
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 5000);
       } else {
         alert(data.message || "Registration failed.");
       }
@@ -116,8 +134,26 @@ function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-6 py-12">
-    
-      <div className="bg-white/90 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl max-w-2xl w-full border border-white">
+      <div className="bg-white/90 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl max-w-2xl w-full border border-white relative overflow-hidden">
+        {/* Success Overlay - when registration success */}
+        {showSuccess && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 transition-all">
+            <div className="bg-green-100 p-6 rounded-full mb-4">
+              <CheckCircle size={80} className="text-green-500" />
+            </div>
+            <h3 className="text-3xl font-black text-gray-800">SUCCESS!</h3>
+            <p className="text-gray-500 font-bold mt-2">
+              Voter ID: {nidNumber} is now enrolled.
+            </p>
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="mt-6 px-8 py-3 bg-indigo-600 text-white rounded-full font-bold shadow-lg"
+            >
+              REGISTER ANOTHER
+            </button>
+          </div>
+        )}
+
         <div className="text-center mb-10">
           <div className="inline-flex p-4 rounded-3xl bg-indigo-600 text-white mb-4 shadow-xl shadow-indigo-200">
             <User size={32} />
@@ -131,7 +167,7 @@ function Signup() {
         </div>
 
         <div className="space-y-6">
-          {/* Full Name - Single Row */}
+          {/* Full Name */}
           <div>
             <label className="block text-md font-semibold text-black uppercase tracking-wider mb-2 ml-2">
               Full Name
@@ -148,7 +184,7 @@ function Signup() {
             </div>
           </div>
 
-          {/* Row 1: Voter ID & Mobile */}
+          {/* Voter ID & Mobile */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-md font-semibold text-black uppercase tracking-wider mb-2 ml-2">
@@ -182,7 +218,7 @@ function Signup() {
             </div>
           </div>
 
-          {/* Row 2: Division & Post Code */}
+          {/* Division & Post Code */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-md font-semibold text-black uppercase tracking-wider mb-2 ml-2">

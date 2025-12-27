@@ -70,7 +70,7 @@ function Vote({ voterData }) {
               }
             }
           }
-        }, 1500);
+        }, 3000); 
       } catch (err) {
         console.error("Camera access error:", err);
       }
@@ -83,10 +83,12 @@ function Vote({ voterData }) {
     };
   }, [voterData]);
 
+  // security alert
   const handleSecurityLogout = (message) => {
     setIsFaceMatched(false);
     alert(message);
-    window.location.replace("/");
+    // login page when security alert
+    window.location.replace("/login"); 
   };
 
   const handleVoteSubmission = async () => {
@@ -112,6 +114,7 @@ function Vote({ voterData }) {
       const data = await response.json();
       if (data.success) {
         alert("Success! Your vote has been recorded.");
+        // if vote success then will go home page
         window.location.replace("/");
       } else {
         alert(data.message || "Vote submission failed.");
@@ -190,7 +193,6 @@ function Vote({ voterData }) {
             </Typography>
 
             <Grid container spacing={3}>
-              {/* Voter ID */}
               <Grid item xs={12} sm={6} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
@@ -210,7 +212,6 @@ function Vote({ voterData }) {
                 </Box>
               </Grid>
 
-              {/* Mobile Number */}
               <Grid item xs={12} sm={6} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
@@ -230,7 +231,6 @@ function Vote({ voterData }) {
                 </Box>
               </Grid>
 
-              {/* Post Code Section (FIXED Hash -> Numbers) */}
               <Grid item xs={12} sm={6} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
@@ -250,7 +250,6 @@ function Vote({ voterData }) {
                 </Box>
               </Grid>
 
-              {/* Division Section (FIXED Map -> LocationOn) */}
               <Grid item xs={12} sm={6} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
@@ -272,7 +271,6 @@ function Vote({ voterData }) {
             </Grid>
           </Grid>
 
-          {/* Address */}
           <Grid item xs={12} md={8}>
             <Box className="flex items-center gap-3 bg-black/20 p-4 rounded-2xl border border-white/5">
               <div className="p-2 bg-white/10 rounded-xl">
@@ -382,7 +380,6 @@ function Vote({ voterData }) {
         ))}
       </Grid>
 
-      {/* Submit Button */}
       <Box className="text-center mt-20 mb-20">
         <Button
           onClick={handleVoteSubmission}
@@ -396,7 +393,6 @@ function Vote({ voterData }) {
             fontWeight: "900",
             background: "linear-gradient(135deg, #1e1b4b 0%, #3b82f6 100%)",
             boxShadow: "0 25px 50px rgba(59, 130, 246, 0.4)",
-
             "&:hover": {
               transform: "translateY(-5px)",
               boxShadow: "0 30px 60px rgba(59, 130, 246, 0.5)",
