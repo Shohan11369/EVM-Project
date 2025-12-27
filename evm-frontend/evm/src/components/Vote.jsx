@@ -70,7 +70,7 @@ function Vote({ voterData }) {
               }
             }
           }
-        }, 3000); 
+        }, 3000);
       } catch (err) {
         console.error("Camera access error:", err);
       }
@@ -88,7 +88,7 @@ function Vote({ voterData }) {
     setIsFaceMatched(false);
     alert(message);
     // login page when security alert
-    window.location.replace("/login"); 
+    window.location.replace("/login");
   };
 
   const handleVoteSubmission = async () => {
@@ -327,6 +327,12 @@ function Vote({ voterData }) {
       </Box>
 
       {/* Candidates List */}
+      <div className="flex items-center justify-center gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 shadow-sm mb-6">
+        <span className="flex h-3 w-3 rounded-full bg-indigo-600 animate-pulse"></span>
+        <h2 className="text-xl font-black text-black uppercase tracking-tight">
+          Please Select Your Candidate
+        </h2>
+      </div>
       <Grid container spacing={4} className={!isFaceMatched ? "blur-3xl" : ""}>
         {candidates.map((c) => (
           <Grid item xs={12} md={6} key={c.id}>
