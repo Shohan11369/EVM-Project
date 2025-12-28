@@ -11,6 +11,8 @@ import {
   Phone,
   Hash,
   CheckCircle,
+  LayoutDashboard, 
+  LogOut, 
 } from "lucide-react";
 
 function Signup() {
@@ -21,12 +23,29 @@ function Signup() {
   const [address, setAddress] = useState("");
   const [division, setDivision] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false); // success message show
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const navigate = useNavigate();
+
+  // --- Refs for Enter to Next functionality ---
+  const nidRef = useRef(null);
+  const mobileRef = useRef(null);
+  const divisionRef = useRef(null);
+  const postCodeRef = useRef(null);
+  const addressRef = useRef(null);
+
+  // Enter Key Handler Function
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); 
+      if (nextRef && nextRef.current) {
+        nextRef.current.focus();
+      }
+    }
+  };
 
   useEffect(() => {
     const loadModelsAndStartCamera = async () => {
@@ -50,7 +69,7 @@ function Signup() {
     loadModelsAndStartCamera();
     return () => {
       if (streamRef.current) {
-        streamRef.cuarrent.getTracks().forEach((track) => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
@@ -75,8 +94,8 @@ function Signup() {
         .detectSingleFace(
           videoRef.current,
           new faceapi.TinyFaceDetectorOptions({
-            inputSize: 512, 
-            scoreThreshold: 0.5, 
+            inputSize: 512,
+            scoreThreshold: 0.5,
           })
         )
         .withFaceLandmarks()
@@ -113,16 +132,12 @@ function Signup() {
 
       if (data.success) {
         alert("Voter registered successfully!");
-
-        // form restart
         setName("");
         setNidNumber("");
         setMobileNumber("");
         setPostCode("");
         setAddress("");
         setDivision("");
-
-        // success message
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 5000);
       } else {
@@ -137,7 +152,26 @@ function Signup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-6 py-12">
       <div className="bg-white/90 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl max-w-2xl w-full border border-white relative overflow-hidden">
-        {/* Success Overlay - when registration success */}
+        {/* TOP NAVIGATION BUTTONS */}
+        <div className="flex justify-between items-center mb-8">
+          <button
+            onClick={() => navigate("/admin/dashboard")}
+            className="flex items-center gap-2 text-xs font-black text-indigo-600 border-2 border-indigo-100 px-4 py-2 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+          >
+            <LayoutDashboard size={18} />
+            LIVE DASHBOARD
+          </button>
+
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 text-xs font-black text-red-500 border-2 border-red-50 px-4 py-2 rounded-2xl hover:bg-red-500 hover:text-white transition-all"
+          >
+            <LogOut size={18} />
+            LOGOUT
+          </button>
+        </div>
+
+        {/* Success Overlay */}
         {showSuccess && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 transition-all">
             <div className="bg-green-100 p-6 rounded-full mb-4">
@@ -145,7 +179,7 @@ function Signup() {
             </div>
             <h3 className="text-3xl font-black text-gray-800">SUCCESS!</h3>
             <p className="text-gray-500 font-bold mt-2">
-              Voter ID: {nidNumber} is now enrolled.
+              Registration completed successfully.
             </p>
             <button
               onClick={() => setShowSuccess(false)}
@@ -181,6 +215,8 @@ function Signup() {
                 placeholder="Enter your full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, nidRef)}
+                autoFocus
                 className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
               />
             </div>
@@ -195,10 +231,12 @@ function Signup() {
               <div className="relative">
                 <CreditCard className="absolute left-5 top-4 text-indigo-400 size-6" />
                 <input
+                  ref={nidRef}
                   type="text"
                   placeholder="Enter ID"
                   value={nidNumber}
                   onChange={(e) => setNidNumber(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, mobileRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
                 />
               </div>
@@ -210,10 +248,12 @@ function Signup() {
               <div className="relative">
                 <Phone className="absolute left-5 top-4 text-indigo-400 size-6" />
                 <input
+                  ref={mobileRef}
                   type="text"
                   placeholder="017XXXXXXXX"
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, divisionRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
                 />
               </div>
@@ -229,8 +269,10 @@ function Signup() {
               <div className="relative">
                 <MapPin className="absolute left-5 top-4 text-indigo-400 size-6" />
                 <select
+                  ref={divisionRef}
                   value={division}
                   onChange={(e) => setDivision(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, postCodeRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg appearance-none cursor-pointer"
                 >
                   <option value="">Select Division</option>
@@ -252,10 +294,12 @@ function Signup() {
               <div className="relative">
                 <Hash className="absolute left-5 top-4 text-indigo-400 size-6" />
                 <input
+                  ref={postCodeRef}
                   type="text"
                   placeholder="1234"
                   value={postCode}
                   onChange={(e) => setPostCode(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, addressRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
                 />
               </div>
@@ -270,9 +314,16 @@ function Signup() {
             <div className="relative">
               <Home className="absolute left-5 top-5 text-indigo-400 size-6" />
               <textarea
+                ref={addressRef}
                 placeholder="House No, Road Name, Area, Upazila..."
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSignup(); 
+                  }
+                }}
                 className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all h-28 resize-none font-normal text-lg"
               />
             </div>

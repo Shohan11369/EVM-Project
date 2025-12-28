@@ -7,18 +7,25 @@ function VoterList() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
     const fetchVoters = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/voter/all");
+        // timestamp
+        const res = await fetch(
+          `http://localhost:5000/api/voter/all?t=${new Date().getTime()}`
+        );
         const data = await res.json();
-        if (data.success) setVoters(data.voters);
+        if (data.success && isMounted) setVoters(data.voters);
       } catch (error) {
         console.error("Error:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     fetchVoters();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredVoters = voters.filter(
