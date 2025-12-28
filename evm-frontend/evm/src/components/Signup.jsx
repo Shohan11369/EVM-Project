@@ -11,8 +11,9 @@ import {
   Phone,
   Hash,
   CheckCircle,
-  LayoutDashboard, 
-  LogOut, 
+  LayoutDashboard,
+  LogOut,
+  XCircle,
 } from "lucide-react";
 
 function Signup() {
@@ -25,22 +26,31 @@ function Signup() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // --- State for Auto-Closing Notification ---
+  const [toast, setToast] = useState({ show: false, type: "", message: "" });
+
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const navigate = useNavigate();
 
-  // --- Refs for Enter to Next functionality ---
   const nidRef = useRef(null);
   const mobileRef = useRef(null);
   const divisionRef = useRef(null);
   const postCodeRef = useRef(null);
   const addressRef = useRef(null);
 
-  // Enter Key Handler Function
+  // Auto-close notification function
+  const showAutoToast = (type, message) => {
+    setToast({ show: true, type, message });
+    setTimeout(() => {
+      setToast({ show: false, type: "", message: "" });
+    }, 3000); // Automatically disappears after 3 seconds
+  };
+
   const handleKeyDown = (e, nextRef) => {
     if (e.key === "Enter") {
-      e.preventDefault(); 
+      e.preventDefault();
       if (nextRef && nextRef.current) {
         nextRef.current.focus();
       }
@@ -83,7 +93,7 @@ function Signup() {
       !address ||
       !division
     ) {
-      return alert("Please provide all required information.");
+      return showAutoToast("error", "Please provide all information.");
     }
 
     setIsRegistering(true);
@@ -100,9 +110,13 @@ function Signup() {
         )
         .withFaceLandmarks()
         .withFaceDescriptor();
+
       if (!detections) {
         setIsRegistering(false);
-        return alert("Face not detected! Please face the camera.");
+        return showAutoToast(
+          "error",
+          "Face not detected! Please face the camera."
+        );
       }
 
       const canvas = document.createElement("canvas");
@@ -131,7 +145,7 @@ function Signup() {
       setIsRegistering(false);
 
       if (data.success) {
-        alert("Voter registered successfully!");
+        showAutoToast("success", "Voter registered successfully!");
         setName("");
         setNidNumber("");
         setMobileNumber("");
@@ -141,16 +155,36 @@ function Signup() {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 5000);
       } else {
-        alert(data.message || "Registration failed.");
+        showAutoToast("error", data.message || "Registration failed.");
       }
     } catch (error) {
       setIsRegistering(false);
-      alert("Server Error! Check backend.");
+      showAutoToast("error", "Server Error! Check backend.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-6 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-6 py-12 relative">
+      {/* --- AUTO-CLOSING TOAST --- */}
+      {toast.show && (
+        <div
+          className={`fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce transition-all ${
+            toast.type === "success"
+              ? "bg-green-600 text-white"
+              : "bg-red-600 text-white"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle size={24} />
+          ) : (
+            <XCircle size={24} />
+          )}
+          <span className="font-black uppercase tracking-wider">
+            {toast.message}
+          </span>
+        </div>
+      )}
+
       <div className="bg-white/90 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl max-w-2xl w-full border border-white relative overflow-hidden">
         {/* TOP NAVIGATION BUTTONS */}
         <div className="flex justify-between items-center mb-8">
@@ -321,7 +355,7 @@ function Signup() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    handleSignup(); 
+                    handleSignup();
                   }
                 }}
                 className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all h-28 resize-none font-normal text-lg"

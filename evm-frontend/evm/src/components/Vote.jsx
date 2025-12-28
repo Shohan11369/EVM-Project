@@ -22,14 +22,26 @@ import {
   Numbers,
   CreditCard,
   LocationOn,
+  ErrorOutline,
+  Stars,
 } from "@mui/icons-material";
 
 function Vote({ voterData }) {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [isFaceMatched, setIsFaceMatched] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false); 
+
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const videoRef = useRef(null);
   const monitorIntervalRef = useRef(null);
+
+  const showAutoMessage = (msg, type = "info") => {
+    setToast({ show: true, message: msg, type: type });
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "" });
+    }, 3000);
+  };
 
   useEffect(() => {
     let voteStream = null;
@@ -42,7 +54,11 @@ function Vote({ voterData }) {
         if (videoRef.current) videoRef.current.srcObject = stream;
 
         monitorIntervalRef.current = setInterval(async () => {
-          if (videoRef.current && videoRef.current.readyState === 4) {
+          if (
+            videoRef.current &&
+            videoRef.current.readyState === 4 &&
+            !showSuccessScreen
+          ) {
             const detection = await faceapi
               .detectSingleFace(
                 videoRef.current,
@@ -52,9 +68,7 @@ function Vote({ voterData }) {
               .withFaceDescriptor();
 
             if (!detection) {
-              handleSecurityLogout(
-                "Security Alert: Face not detected! Logging out."
-              );
+              handleSecurityLogout("Face not detected! Logging out.");
               return;
             }
 
@@ -64,9 +78,7 @@ function Vote({ voterData }) {
                 new Float32Array(voterData.faceEncoding)
               );
               if (distance > 0.6) {
-                handleSecurityLogout(
-                  "Security Alert: Identity mismatch detected!"
-                );
+                handleSecurityLogout("Identity mismatch detected!");
               }
             }
           }
@@ -81,25 +93,21 @@ function Vote({ voterData }) {
       if (monitorIntervalRef.current) clearInterval(monitorIntervalRef.current);
       if (voteStream) voteStream.getTracks().forEach((track) => track.stop());
     };
-  }, [voterData]);
+  }, [voterData, showSuccessScreen]);
 
-  // security alert
   const handleSecurityLogout = (message) => {
     setIsFaceMatched(false);
-    alert(message);
-    // login page when security alert
-    window.location.replace("/login");
+    showAutoMessage(message, "error");
+    setTimeout(() => {
+      window.location.replace("/login");
+    }, 3000);
   };
 
   const handleVoteSubmission = async () => {
     if (!selectedCandidate) {
-      alert("Please select a candidate first.");
+      showAutoMessage("Please select a candidate first.", "error");
       return;
     }
-    const confirmCheck = window.confirm(
-      `Are you sure you want to cast your vote for ${selectedCandidate}?`
-    );
-    if (!confirmCheck) return;
 
     setIsSubmitting(true);
     try {
@@ -112,16 +120,20 @@ function Vote({ voterData }) {
         }),
       });
       const data = await response.json();
+
       if (data.success) {
-        alert("Success! Your vote has been recorded.");
-        // if vote success then will go home page
-        window.location.replace("/");
+        //success screen on
+        setShowSuccessScreen(true);
+        
+        setTimeout(() => {
+          window.location.replace("/");
+        }, 4000);
       } else {
-        alert(data.message || "Vote submission failed.");
+        showAutoMessage(data.message || "Vote submission failed.", "error");
+        setIsSubmitting(false);
       }
     } catch (err) {
-      alert("Server error! Please check your connection.");
-    } finally {
+      showAutoMessage("Server error! Please check connection.", "error");
       setIsSubmitting(false);
     }
   };
@@ -141,10 +153,72 @@ function Vote({ voterData }) {
   ];
 
   return (
-    <Container maxWidth="lg" className="py-10">
+    <Container maxWidth="lg" className="py-10 relative">
+      {/* Success screen*/}
+      {showSuccessScreen && (
+        <Box className="fixed inset-0 z-[5000] bg-indigo-950 flex flex-col items-center justify-center text-center px-4">
+          <div className="animate-bounce mb-6">
+            <CheckCircle sx={{ fontSize: 150, color: "#10b981" }} />
+          </div>
+          <Typography
+            variant="h2"
+            className="text-white font-black mb-2 animate-pulse"
+          >
+            CONGRATULATIONS!
+          </Typography>
+          <Typography variant="h4" className="text-indigo-200 font-bold mb-8">
+            Your Vote Has Been Recorded Successfully
+          </Typography>
+          <Box className="p-6 bg-white/10 rounded-[2rem] border border-white/20 backdrop-blur-md">
+            <Typography
+              variant="h6"
+              className="text-green-400 font-black uppercase tracking-widest"
+            >
+              Thank you for participating <br /> in the democratic process.
+            </Typography>
+          </Box>
+          <Typography
+            variant="caption"
+            className="mt-12 text-white/50 uppercase tracking-widest"
+          >
+            Redirecting to home in 4 seconds...
+          </Typography>
+
+          {/* Background Stars Effect */}
+          <Stars
+            className="absolute top-20 left-20 text-yellow-400 opacity-20 animate-spin"
+            sx={{ fontSize: 40 }}
+          />
+          <Stars
+            className="absolute bottom-40 right-40 text-yellow-400 opacity-20 animate-pulse"
+            sx={{ fontSize: 60 }}
+          />
+        </Box>
+      )}
+
+      {/* auto notification*/}
+      {toast.show && (
+        <Box
+          className="fixed top-10 left-1/2 -translate-x-1/2 z-[3000] px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce"
+          sx={{
+            bgcolor:
+              toast.type === "success"
+                ? "#10b981"
+                : toast.type === "error"
+                ? "#ef4444"
+                : "#3b82f6",
+            color: "white",
+            minWidth: "300px",
+          }}
+        >
+          {toast.type === "success" ? <CheckCircle /> : <ErrorOutline />}
+          <Typography fontWeight="bold">{toast.message}</Typography>
+        </Box>
+      )}
+
       {/* Access Denied Overlay */}
-      {!isFaceMatched && (
-        <div className="fixed inset-0 z-[2000] bg-red-900/98 flex flex-col items-center justify-center text-white">
+      {!isFaceMatched && !showSuccessScreen && (
+        <div className="fixed inset-0 z-[2000] bg-red-900/98 flex flex-col items-center justify-center text-red-400">
           <GppBad sx={{ fontSize: 120, mb: 2 }} />
           <Typography variant="h2" fontWeight="900">
             ACCESS DENIED
@@ -183,15 +257,10 @@ function Vote({ voterData }) {
               </Typography>
             </Box>
           </Grid>
-
           <Grid item xs={12} md={9}>
-            <Typography
-              variant="h3"
-              className="font-black mb-8 tracking-tight "
-            >
+            <Typography variant="h3" className="font-black mb-8 tracking-tight">
               {voterData.name}
             </Typography>
-
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
@@ -211,7 +280,6 @@ function Vote({ voterData }) {
                   </Box>
                 </Box>
               </Grid>
-
               <Grid item xs={12} sm={6} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
@@ -230,26 +298,6 @@ function Vote({ voterData }) {
                   </Box>
                 </Box>
               </Grid>
-
-              <Grid item xs={12} sm={6} md={4}>
-                <Box className="flex items-center gap-3 mt-4">
-                  <div className="p-2 bg-white/10 rounded-xl">
-                    <Numbers className="text-indigo-300" />
-                  </div>
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      className="block opacity-80 font-bold uppercase tracking-wider"
-                    >
-                      Post Code
-                    </Typography>
-                    <Typography variant="body1" className="font-bold">
-                      {voterData.postCode || "N/A"}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
               <Grid item xs={12} sm={6} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
@@ -269,25 +317,6 @@ function Vote({ voterData }) {
                 </Box>
               </Grid>
             </Grid>
-          </Grid>
-
-          <Grid item xs={12} md={8}>
-            <Box className="flex items-center gap-3 bg-black/20 p-4 rounded-2xl border border-white/5">
-              <div className="p-2 bg-white/10 rounded-xl">
-                <HomeWork className="text-black" />
-              </div>
-              <Box>
-                <Typography
-                  variant="h7"
-                  className="block opacity-100 font-bold uppercase tracking-wider"
-                >
-                  Residential Address
-                </Typography>
-                <Typography variant="h8" className="font-medium">
-                  {voterData.address}
-                </Typography>
-              </Box>
-            </Box>
           </Grid>
         </Grid>
       </Paper>
@@ -333,11 +362,16 @@ function Vote({ voterData }) {
           Please Select Your Candidate
         </h2>
       </div>
-      <Grid container spacing={4} className={!isFaceMatched ? "blur-3xl" : ""}>
+
+      <Grid
+        container
+        spacing={4}
+        className={!isFaceMatched || showSuccessScreen ? "blur-3xl" : ""}
+      >
         {candidates.map((c) => (
           <Grid item xs={12} md={6} key={c.id}>
             <Card
-              onClick={() => setSelectedCandidate(c.name)}
+              onClick={() => !showSuccessScreen && setSelectedCandidate(c.name)}
               className={`cursor-pointer border-4 transition-all duration-300 rounded-[2.5rem] flex items-center ${
                 selectedCandidate === c.name
                   ? "border-green-500 bg-green-50 shadow-lg scale-[1.01]"
@@ -389,7 +423,12 @@ function Vote({ voterData }) {
       <Box className="text-center mt-20 mb-20">
         <Button
           onClick={handleVoteSubmission}
-          disabled={!isFaceMatched || !selectedCandidate || isSubmitting}
+          disabled={
+            !isFaceMatched ||
+            !selectedCandidate ||
+            isSubmitting ||
+            showSuccessScreen
+          }
           variant="contained"
           sx={{
             px: 15,

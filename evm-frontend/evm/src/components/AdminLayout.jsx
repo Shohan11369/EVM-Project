@@ -1,22 +1,34 @@
 import React from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"; // useNavigate যোগ করা হয়েছে
 import { LayoutDashboard, Users, UserPlus, LogOut } from "lucide-react";
 
 const AdminLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate(); 
 
-  const handleLogout = () => {
+  const handleLogout = (e) => {
+    // default link off
+    e.preventDefault();
+
+    // section remove
+    localStorage.removeItem("adminToken");
+
+    // camera off logic
     navigator.mediaDevices
       .getUserMedia({ video: true })
       .then((stream) => {
         stream.getTracks().forEach((track) => track.stop());
       })
       .catch(() => {});
+
+    // history remove
+    navigate("/", { replace: true });
   };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <div className="w-64 bg-gray-800 text-white p-6 shadow-xl hidden md:block">
+      {/* Sidebar - main menu */}
+      <div className="w-64 bg-gray-800 text-white p-6 shadow-xl hidden md:block min-h-screen fixed">
         <h2 className="text-2xl font-black mb-10 border-b border-indigo-800 pb-4">
           Admin Panel (অ্যাডমিন প্যানেল)
         </h2>
@@ -58,6 +70,7 @@ const AdminLayout = () => {
             Voter Registration (ভোটার এন্ট্রি)
           </NavLink>
 
+          {/* Logout NavLink */}
           <NavLink
             to="/"
             onClick={handleLogout}
@@ -69,8 +82,8 @@ const AdminLayout = () => {
         </nav>
       </div>
 
-      <div className="flex-1 p-4 md:p-10 overflow-y-auto">
-        
+      {/* Main Content Area  */}
+      <div className="flex-1 ml-64 p-10 overflow-y-auto">
         <Outlet key={location.pathname} />
       </div>
     </div>
