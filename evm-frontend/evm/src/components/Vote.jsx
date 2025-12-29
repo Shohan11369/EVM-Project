@@ -19,18 +19,18 @@ import {
   HomeWork,
   AccountCircle,
   Phone,
-  Numbers,
   CreditCard,
   LocationOn,
   ErrorOutline,
   Stars,
+  MarkAsUnread,
 } from "@mui/icons-material";
 
 function Vote({ voterData }) {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [isFaceMatched, setIsFaceMatched] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessScreen, setShowSuccessScreen] = useState(false); 
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
 
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const videoRef = useRef(null);
@@ -122,9 +122,7 @@ function Vote({ voterData }) {
       const data = await response.json();
 
       if (data.success) {
-        //success screen on
         setShowSuccessScreen(true);
-        
         setTimeout(() => {
           window.location.replace("/");
         }, 4000);
@@ -154,49 +152,37 @@ function Vote({ voterData }) {
 
   return (
     <Container maxWidth="lg" className="py-10 relative">
-      {/* Success screen*/}
       {showSuccessScreen && (
-        <Box className="fixed inset-0 z-[5000] bg-indigo-950 flex flex-col items-center justify-center text-center px-4">
+        <Box className="fixed inset-0 z-[5000] bg-white flex flex-col items-center justify-center text-center px-4">
           <div className="animate-bounce mb-6">
             <CheckCircle sx={{ fontSize: 150, color: "#10b981" }} />
           </div>
           <Typography
             variant="h2"
-            className="text-white font-black mb-2 animate-pulse"
+            className="text-blue-500 font-black mb-6 animate-pulse "
           >
             CONGRATULATIONS!
           </Typography>
-          <Typography variant="h4" className="text-indigo-200 font-bold mb-8">
+          <Typography variant="h4" className="text-black font-bold mt-10">
             Your Vote Has Been Recorded Successfully
           </Typography>
-          <Box className="p-6 bg-white/10 rounded-[2rem] border border-white/20 backdrop-blur-md">
+          <Box className="p-6 bg-white/10 rounded-[2rem] border border-white/20 mt-4 backdrop-blur-md">
             <Typography
               variant="h6"
-              className="text-green-400 font-black uppercase tracking-widest"
+              className="text-black font-black uppercase tracking-widest text-center mt-8"
             >
               Thank you for participating <br /> in the democratic process.
             </Typography>
           </Box>
           <Typography
             variant="caption"
-            className="mt-12 text-white/50 uppercase tracking-widest"
+            className="mt-16 text-white/50 uppercase tracking-widest"
           >
             Redirecting to home in 4 seconds...
           </Typography>
-
-          {/* Background Stars Effect */}
-          <Stars
-            className="absolute top-20 left-20 text-yellow-400 opacity-20 animate-spin"
-            sx={{ fontSize: 40 }}
-          />
-          <Stars
-            className="absolute bottom-40 right-40 text-yellow-400 opacity-20 animate-pulse"
-            sx={{ fontSize: 60 }}
-          />
         </Box>
       )}
 
-      {/* auto notification*/}
       {toast.show && (
         <Box
           className="fixed top-10 left-1/2 -translate-x-1/2 z-[3000] px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce"
@@ -216,7 +202,6 @@ function Vote({ voterData }) {
         </Box>
       )}
 
-      {/* Access Denied Overlay */}
       {!isFaceMatched && !showSuccessScreen && (
         <div className="fixed inset-0 z-[2000] bg-red-900/98 flex flex-col items-center justify-center text-red-400">
           <GppBad sx={{ fontSize: 120, mb: 2 }} />
@@ -229,7 +214,6 @@ function Vote({ voterData }) {
         </div>
       )}
 
-      {/* Profile Header Card */}
       <Paper
         elevation={24}
         className="p-8 bg-gradient-to-br from-gray-900 via-indigo-950 to-blue-900 text-white mb-10 rounded-[3rem] border-b-8 border-indigo-500 shadow-2xl"
@@ -237,7 +221,7 @@ function Vote({ voterData }) {
         <Grid container spacing={4} alignItems="center">
           <Grid item xs={12} md={3} className="text-center">
             <Avatar
-              src={voterData.image}
+              src={voterData?.image}
               sx={{
                 width: 170,
                 height: 170,
@@ -257,61 +241,108 @@ function Vote({ voterData }) {
               </Typography>
             </Box>
           </Grid>
+
+          {/* Address */}
           <Grid item xs={12} md={9}>
-            <Typography variant="h3" className="font-black mb-8 tracking-tight">
-              {voterData.name}
+            <Typography
+              variant="h3"
+              className="font-black mb-8 tracking-tight text-center md:text-left"
+            >
+              {voterData?.name || "N/A"}
             </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} md={4}>
+            <Grid container spacing={5}>
+              <Grid item xs={14} sm={8} md={6}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
-                    <CreditCard className="text-indigo-300" />
+                    <CreditCard className="text-indigo-400" />
                   </div>
                   <Box>
                     <Typography
-                      variant="caption"
-                      className="block opacity-80 font-bold uppercase tracking-wider"
+                      variant="body3"
+                      className="block  font-bold uppercase text-[14px] "
                     >
                       Voter ID
                     </Typography>
-                    <Typography variant="body1" className="font-bold">
-                      {voterData.voterId}
+                    <Typography variant="body1" className="font-bold text-black">
+                      {voterData?.voterId || "N/A"}
                     </Typography>
                   </Box>
                 </Box>
               </Grid>
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid item xs={14} sm={8} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
-                    <Phone className="text-indigo-300" />
+                    <Phone className="text-indigo-400" />
                   </div>
                   <Box>
                     <Typography
-                      variant="caption"
-                      className="block opacity-80 font-bold uppercase tracking-wider"
+                      variant="body3"
+                      className="block font-bold uppercase text-[14px]"
                     >
-                      Phone Number
+                      Phone
                     </Typography>
                     <Typography variant="body1" className="font-bold">
-                      {voterData.mobile || "N/A"}
+                      {voterData?.mobile || "N/A"}
                     </Typography>
                   </Box>
                 </Box>
               </Grid>
-              <Grid item xs={12} sm={6} md={4}>
+
+              {/* Post Code Display Area */}
+              <Grid item xs={14} sm={8} md={4}>
                 <Box className="flex items-center gap-3 mt-4">
                   <div className="p-2 bg-white/10 rounded-xl">
-                    <LocationOn className="text-indigo-300" />
+                    <MarkAsUnread className="text-indigo-400" />
                   </div>
                   <Box>
                     <Typography
-                      variant="caption"
-                      className="block opacity-80 font-bold uppercase tracking-wider"
+                      variant="body3"
+                      className="block  font-bold uppercase text-[14px]"
                     >
-                      Division
+                      Post Code
                     </Typography>
                     <Typography variant="body1" className="font-bold">
-                      {voterData.division}
+                      {voterData?.postCode || voterData?.postCode || "N/A"}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              <Grid item xs={14} sm={8} md={4}>
+                <Box className="flex items-center gap-3 mt-4">
+                  <div className="p-2 bg-white/10 rounded-xl">
+                    <LocationOn className="text-indigo-400" />
+                  </div>
+                  <Box>
+                    <Typography
+                      variant="body3"
+                      className="block  font-bold uppercase text-[14px]"
+                    >
+                      Area Details
+                    </Typography>
+                    <Typography variant="body1" className="font-bold">
+                      {voterData?.upazila}, {voterData?.district}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={14} sm={8} md={8}>
+                <Box className="flex items-center gap-3 mt-4">
+                  <div className="p-2 bg-white/10 rounded-xl">
+                    <HomeWork className="text-indigo-400" />
+                  </div>
+                  <Box>
+                    <Typography
+                      variant="body3"
+                      className="block font-bold uppercase text-[14px]"
+                    >
+                      Full Address
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      className="font-bold truncate"
+                    >
+                      {voterData?.address || "No specific address provided"}
                     </Typography>
                   </Box>
                 </Box>
@@ -321,7 +352,6 @@ function Vote({ voterData }) {
         </Grid>
       </Paper>
 
-      {/* Live Monitoring */}
       <Box className="flex flex-col items-center mb-12">
         <Badge
           overlap="circular"
@@ -348,14 +378,13 @@ function Vote({ voterData }) {
           </div>
         </Badge>
         <Typography
-          variant="caption"
-          className="mt-4 font-black text-indigo-800 uppercase tracking-widest bg-gray-100 px-6 py-1 rounded-full border border-gray-200"
+          variant="body2"
+          className="mt-6 text-black uppercase tracking-widest bg-gray-100 px-6 py-1 rounded-full border border-gray-200"
         >
           Real-time Identity Validation
         </Typography>
       </Box>
 
-      {/* Candidates List */}
       <div className="flex items-center justify-center gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 shadow-sm mb-6">
         <span className="flex h-3 w-3 rounded-full bg-indigo-600 animate-pulse"></span>
         <h2 className="text-xl font-black text-black uppercase tracking-tight">

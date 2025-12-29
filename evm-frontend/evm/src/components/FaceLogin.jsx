@@ -24,7 +24,7 @@ function FaceLogin({ onLoginSuccess }) {
     setStatus({ show: true, type, message });
     setTimeout(() => {
       setStatus({ show: false, type: "", message: "" });
-    }, 3000);
+    }, 4000); 
   };
 
   const playSound = (type) => {
@@ -113,13 +113,23 @@ function FaceLogin({ onLoginSuccess }) {
         setTimeout(() => {
           stopCamera();
           onLoginSuccess(data.voter);
-          // back button replace: true
           navigate("/vote", { replace: true });
         }, 1500);
       } else {
         playSound("error");
         setLoading(false);
-        showAutoMessage("error", data.message || "Identity not recognized!");
+
+        // name with logic
+        if (data.isVoted && data.voterName) {
+          showAutoMessage(
+            "error",
+            `Hello ${data.voterName}, you already voted!`
+          );
+        } else {
+          showAutoMessage("error", data.message || "Identity not recognized!");
+        }
+        // ------------------------------------------
+
         setTimeout(() => setIsScanning(true), 5000);
       }
     } catch (error) {
