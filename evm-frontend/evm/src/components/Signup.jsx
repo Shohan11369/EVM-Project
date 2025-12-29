@@ -309,7 +309,13 @@ function Signup() {
                   type="text"
                   placeholder="017XXXXXXXX"
                   value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // regex only number
+                    if (/^\d*$/.test(value)) {
+                      setMobileNumber(value);
+                    }
+                  }}
                   onKeyDown={(e) => handleKeyDown(e, divisionRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
                 />
@@ -400,6 +406,7 @@ function Signup() {
               <label className="block text-md font-semibold text-black uppercase tracking-wider mb-2 ml-2">
                 Post Code
               </label>
+
               <div className="relative">
                 <Hash className="absolute left-5 top-4 text-indigo-400 size-6" />
                 <input
@@ -407,7 +414,13 @@ function Signup() {
                   type="text"
                   placeholder="1234"
                   value={postCode}
-                  onChange={(e) => setPostCode(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // only number
+                    if (/^\d*$/.test(value)) {
+                      setPostCode(value);
+                    }
+                  }}
                   onKeyDown={(e) => handleKeyDown(e, addressRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
                 />
