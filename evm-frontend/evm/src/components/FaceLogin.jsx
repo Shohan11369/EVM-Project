@@ -24,7 +24,7 @@ function FaceLogin({ onLoginSuccess }) {
     setStatus({ show: true, type, message });
     setTimeout(() => {
       setStatus({ show: false, type: "", message: "" });
-    }, 4000); 
+    }, 4000);
   };
 
   const playSound = (type) => {
@@ -82,16 +82,42 @@ function FaceLogin({ onLoginSuccess }) {
         const detection = await faceapi
           .detectSingleFace(
             videoRef.current,
-            new faceapi.TinyFaceDetectorOptions()
+            new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.5 })
           )
           .withFaceLandmarks()
           .withFaceDescriptor();
 
         if (detection && isScanning) {
-          setIsScanning(false);
-          handleAutoLogin(detection.descriptor);
+          const landmarks = detection.landmarks;
+          const score = detection.detection.score;
+
+          // every point check
+          const allPoints = landmarks.positions;
+          
+          // mouth and nose gap
+          const nose = landmarks.getNose();
+          const mouth = landmarks.getMouth();
+          const leftEye = landmarks.getLeftEye();
+          const rightEye = landmarks.getRightEye();
+
+          // complex check
+          const isFaceClear = 
+            score > 0.94 && 
+            allPoints.length === 68 &&
+            nose.length > 0 && 
+            mouth.length > 0 && 
+            leftEye.length > 0 && 
+            rightEye.length > 0;
+
+          if (isFaceClear) {
+            setIsScanning(false);
+            handleAutoLogin(detection.descriptor);
+          } else {
+            // if hand or anything detect
+            showAutoMessage("error", "CLEAN YOUR FACE! Object Detected.");
+          }
         }
-      }, 1500);
+      }, 2000); 
     }
     return () => clearInterval(intervalRef.current);
   }, [modelsLoaded, loading, isScanning]);
@@ -119,7 +145,6 @@ function FaceLogin({ onLoginSuccess }) {
         playSound("error");
         setLoading(false);
 
-        // name with logic
         if (data.isVoted && data.voterName) {
           showAutoMessage(
             "error",
@@ -128,7 +153,6 @@ function FaceLogin({ onLoginSuccess }) {
         } else {
           showAutoMessage("error", data.message || "Identity not recognized!");
         }
-        // ------------------------------------------
 
         setTimeout(() => setIsScanning(true), 5000);
       }
@@ -141,10 +165,9 @@ function FaceLogin({ onLoginSuccess }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-4 relative">
-      {/* Auto Notification Bar */}
       {status.show && (
         <div
-          className={`absolute top-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl transition-all duration-500 animate-bounce ${
+          className={`fixed top-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl transition-all duration-500 animate-bounce ${
             status.type === "success"
               ? "bg-green-500 text-white"
               : "bg-red-500 text-white"
@@ -160,7 +183,6 @@ function FaceLogin({ onLoginSuccess }) {
       )}
 
       <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full text-center relative">
-        {/* back button */}
         <button
           onClick={() => navigate("/")}
           className="absolute left-6 top-8 text-gray-400 hover:text-indigo-600 transition-colors"

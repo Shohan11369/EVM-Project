@@ -123,22 +123,34 @@ function Signup() {
 
     setIsRegistering(true);
     try {
+      // Step 1: Face Detection with higher threshold
       const detections = await faceapi
         .detectSingleFace(
           videoRef.current,
           new faceapi.TinyFaceDetectorOptions({
             inputSize: 512,
-            scoreThreshold: 0.5,
+            scoreThreshold: 0.85, // Raised from 0.5 to prevent hands/objects
           })
         )
         .withFaceLandmarks()
         .withFaceDescriptor();
 
+      // Step 2: Validate Detection Quality
       if (!detections) {
         setIsRegistering(false);
         return showAutoToast(
           "error",
-          "Face not detected! Please face the camera."
+          "Face not detected! Please face the camera clearly."
+        );
+      }
+
+      // Step 3: Specific Landmark Check (Ensures face isn't covered)
+      // Check if the detection score is high enough or if points are missing
+      if (detections.detection.score < 0.9) {
+        setIsRegistering(false);
+        return showAutoToast(
+          "error",
+          "Clear face not detected. Please remove hands or hair from face."
         );
       }
 
@@ -171,7 +183,6 @@ function Signup() {
 
       if (data.success) {
         showAutoToast("success", "Voter registered successfully!");
-        // Reset Inputs
         setName("");
         setNidNumber("");
         setMobileNumber("");
@@ -180,14 +191,8 @@ function Signup() {
         setDivision("");
         setDistrict("");
         setUpazila("");
-
-        // Show Success Overlay
         setShowSuccess(true);
-
-        // after 3 sec automatically refresh
-        setTimeout(() => {
-          setShowSuccess(false);
-        }, 3000);
+        setTimeout(() => setShowSuccess(false), 3000);
       } else {
         showAutoToast("error", data.message || "Registration failed.");
       }
@@ -219,6 +224,7 @@ function Signup() {
       )}
 
       <div className="bg-white/90 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl max-w-2xl w-full border border-white relative overflow-hidden">
+        {/* Navigation Buttons */}
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => navigate("/admin/dashboard")}
@@ -234,6 +240,7 @@ function Signup() {
           </button>
         </div>
 
+        {/* Success State */}
         {showSuccess && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 transition-all">
             <div className="bg-green-100 p-6 rounded-full mb-4">
@@ -261,6 +268,7 @@ function Signup() {
           </h2>
         </div>
 
+        {/* Form Inputs */}
         <div className="space-y-6">
           <div>
             <label className="block text-md font-semibold text-black uppercase tracking-wider mb-2 ml-2">
@@ -311,10 +319,7 @@ function Signup() {
                   value={mobileNumber}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // regex only number
-                    if (/^\d*$/.test(value)) {
-                      setMobileNumber(value);
-                    }
+                    if (/^\d*$/.test(value)) setMobileNumber(value);
                   }}
                   onKeyDown={(e) => handleKeyDown(e, divisionRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
@@ -406,7 +411,6 @@ function Signup() {
               <label className="block text-md font-semibold text-black uppercase tracking-wider mb-2 ml-2">
                 Post Code
               </label>
-
               <div className="relative">
                 <Hash className="absolute left-5 top-4 text-indigo-400 size-6" />
                 <input
@@ -416,10 +420,7 @@ function Signup() {
                   value={postCode}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // only number
-                    if (/^\d*$/.test(value)) {
-                      setPostCode(value);
-                    }
+                    if (/^\d*$/.test(value)) setPostCode(value);
                   }}
                   onKeyDown={(e) => handleKeyDown(e, addressRef)}
                   className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-normal text-lg"
@@ -444,6 +445,7 @@ function Signup() {
             </div>
           </div>
 
+          {/* Camera View */}
           <div className="space-y-3">
             <div className="relative overflow-hidden rounded-[2.5rem] border-8 border-white bg-black aspect-video shadow-2xl max-w-md mx-auto">
               <video
