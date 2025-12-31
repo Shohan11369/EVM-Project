@@ -90,17 +90,12 @@ function FaceLogin({ onLoginSuccess }) {
         if (detection && isScanning) {
           const landmarks = detection.landmarks;
           const score = detection.detection.score;
-
-          // every point check
           const allPoints = landmarks.positions;
-          
-          // mouth and nose gap
           const nose = landmarks.getNose();
           const mouth = landmarks.getMouth();
           const leftEye = landmarks.getLeftEye();
           const rightEye = landmarks.getRightEye();
 
-          // complex check
           const isFaceClear = 
             score > 0.94 && 
             allPoints.length === 68 &&
@@ -113,7 +108,6 @@ function FaceLogin({ onLoginSuccess }) {
             setIsScanning(false);
             handleAutoLogin(detection.descriptor);
           } else {
-            // if hand or anything detect
             showAutoMessage("error", "CLEAN YOUR FACE! Object Detected.");
           }
         }
@@ -144,16 +138,11 @@ function FaceLogin({ onLoginSuccess }) {
       } else {
         playSound("error");
         setLoading(false);
-
         if (data.isVoted && data.voterName) {
-          showAutoMessage(
-            "error",
-            `Hello ${data.voterName}, you already voted!`
-          );
+          showAutoMessage("error", `Hello ${data.voterName}, you already voted!`);
         } else {
           showAutoMessage("error", data.message || "Identity not recognized!");
         }
-
         setTimeout(() => setIsScanning(true), 5000);
       }
     } catch (error) {
@@ -164,41 +153,45 @@ function FaceLogin({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-4 relative">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 p-4 relative overflow-x-hidden">
+      
+      {/* Alert Message - Responsive Width */}
       {status.show && (
         <div
-          className={`fixed top-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl transition-all duration-500 animate-bounce ${
+          className={`fixed top-5 md:top-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl shadow-2xl transition-all duration-500 animate-bounce w-[90%] max-w-sm md:max-w-md ${
             status.type === "success"
               ? "bg-green-500 text-white"
               : "bg-red-500 text-white"
           }`}
         >
           {status.type === "success" ? (
-            <CheckCircle size={24} />
+            <CheckCircle size={20} className="shrink-0" />
           ) : (
-            <AlertCircle size={24} />
+            <AlertCircle size={20} className="shrink-0" />
           )}
-          <span className="font-bold text-lg">{status.message}</span>
+          <span className="font-bold text-sm md:text-lg">{status.message}</span>
         </div>
       )}
 
-      <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full text-center relative">
+      {/* Main Card - Responsive padding and width */}
+      <div className="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl max-w-[95%] sm:max-w-md w-full text-center relative">
         <button
           onClick={() => navigate("/")}
-          className="absolute left-6 top-8 text-gray-400 hover:text-indigo-600 transition-colors"
+          className="absolute left-4 top-6 md:left-6 md:top-8 text-gray-400 hover:text-indigo-600 transition-colors"
         >
           <ArrowLeft size={24} />
         </button>
 
-        <div className="inline-flex p-3 rounded-full bg-indigo-100 text-indigo-600 mb-4">
-          <ShieldCheck size={32} />
+        <div className="inline-flex p-2 md:p-3 rounded-full bg-indigo-100 text-indigo-600 mb-3 md:mb-4">
+          <ShieldCheck size={28} />
         </div>
-        <h2 className="text-2xl font-black text-gray-800 tracking-tight">
+        <h2 className="text-xl md:text-2xl font-black text-gray-800 tracking-tight">
           Biometric Login
         </h2>
-        <p className="text-gray-500 mb-8">Keep face steady within the frame</p>
+        <p className="text-sm md:text-base text-gray-500 mb-6 md:mb-8">Keep face steady within the frame</p>
 
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-black aspect-square border-4 border-white shadow-2xl mb-8">
+        {/* Video Container - Square Aspect Ratio maintained */}
+        <div className="relative overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] bg-black aspect-square border-4 border-white shadow-xl md:shadow-2xl mb-6 md:mb-8">
           <video
             ref={videoRef}
             autoPlay
@@ -208,12 +201,12 @@ function FaceLogin({ onLoginSuccess }) {
           />
 
           {loading && (
-            <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white backdrop-blur-md z-20">
+            <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white backdrop-blur-md z-20 p-4">
               <Loader2
                 className="animate-spin mb-3 text-indigo-400"
-                size={48}
+                size={40}
               />
-              <p className="font-bold tracking-widest uppercase text-sm">
+              <p className="font-bold tracking-widest uppercase text-xs md:text-sm text-center">
                 Verifying Identity...
               </p>
             </div>
@@ -224,8 +217,9 @@ function FaceLogin({ onLoginSuccess }) {
           )}
         </div>
 
+        {/* Status Badge */}
         <div
-          className={`py-4 px-6 rounded-2xl text-sm font-bold transition-all ${
+          className={`py-3 md:py-4 px-4 md:px-6 rounded-xl md:rounded-2xl text-xs md:text-sm font-bold transition-all ${
             !modelsLoaded
               ? "bg-gray-100 text-gray-400"
               : "bg-indigo-50 text-indigo-700"
