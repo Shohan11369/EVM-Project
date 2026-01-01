@@ -25,7 +25,7 @@ const AdminLayout = () => {
       })
       .catch(() => {});
 
-    navigate("/", { replace: true });
+    navigate("/admin-login", { replace: true });
   };
 
   const NavItems = () => (
@@ -70,7 +70,7 @@ const AdminLayout = () => {
       </NavLink>
 
       <NavLink
-        to="/"
+        to="/admin-login"
         onClick={handleLogout}
         className="flex items-center gap-3 hover:bg-red-700 p-3 rounded-xl mt-10 md:mt-20 transition text-red-100"
       >

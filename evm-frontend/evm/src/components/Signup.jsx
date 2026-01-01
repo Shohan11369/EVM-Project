@@ -12,7 +12,6 @@ import {
   Hash,
   CheckCircle,
   LayoutDashboard,
-  LogOut,
   XCircle,
 } from "lucide-react";
 
@@ -231,12 +230,13 @@ function Signup() {
             <LayoutDashboard size={16} />{" "}
             <span className="hidden sm:inline">LIVE</span> DASHBOARD
           </button>
-          <button
+          {/* No need there logout button*/}
+          {/* <button
             onClick={() => navigate("/")}
             className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs font-black text-red-500 border-2 border-red-50 px-3 md:px-4 py-2 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-white transition-all"
           >
             <LogOut size={16} /> LOGOUT
-          </button>
+          </button> */}
         </div>
 
         {/* Success Overlay */}
