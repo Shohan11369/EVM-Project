@@ -1,4 +1,6 @@
 import Voter from "../models/Voter.js";
+import bcrypt from "bcryptjs";
+import AdminCredential from "../models/AdminCredential.js";
 
 // Euclidean distance function
 function euclidean(a, b) {
@@ -102,7 +104,10 @@ export const faceLogin = async (req, res) => {
     }
 
     if (!matchedVoter) {
-      return res.json({ success: false, message: "Face not recognized! Registration first." });
+      return res.json({
+        success: false,
+        message: "Face not recognized! Registration first.",
+      });
     }
 
     // check with name
@@ -110,7 +115,7 @@ export const faceLogin = async (req, res) => {
       return res.json({
         success: false,
         isVoted: true,
-        voterName: matchedVoter.name, 
+        voterName: matchedVoter.name,
         message: `Hello ${matchedVoter.name}, you already voted!`,
       });
     }
@@ -149,16 +154,66 @@ export const getResults = async (req, res) => {
   }
 };
 
-// 5. Admin Login
+// 5. Admin Login (same behavior + DB fallback)
 export const adminLogin = async (req, res) => {
-  const { adminId, password } = req.body;
-  if (
-    adminId === process.env.ADMIN_ID &&
-    password === process.env.ADMIN_PASSWORD
-  ) {
-    return res.json({ success: true, message: "Welcome Admin" });
+  try {
+    const { adminId, password } = req.body;
+
+  
+    const saved = await AdminCredential.findOne({ adminId });
+
+    if (saved) {
+      const ok = await bcrypt.compare(password, saved.passwordHash);
+      if (ok) {
+        return res.json({ success: true, message: "Welcome Admin" });
+      }
+      return res.json({ success: false, message: "Invalid Credentials" });
+    }
+
+    if (
+      adminId === process.env.ADMIN_ID &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      return res.json({ success: true, message: "Welcome Admin" });
+    }
+
+    return res.json({ success: false, message: "Invalid Credentials" });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
-  res.json({ success: false, message: "Invalid Credentials" });
+};
+
+// ✅ NEW: Admin Reset Password
+export const adminResetPassword = async (req, res) => {
+  try {
+    const { adminId, newPassword } = req.body;
+
+    if (!adminId || !newPassword) {
+      return res.json({
+        success: false,
+        message: "adminId and newPassword are required",
+      });
+    }
+
+    //  security:  env ADMIN_ID  reset allow
+    if (adminId !== process.env.ADMIN_ID) {
+      return res.json({ success: false, message: "Unauthorized adminId" });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+
+    await AdminCredential.findOneAndUpdate(
+      { adminId },
+      { passwordHash: hash },
+      { upsert: true, new: true }
+    );
+
+    return res.json({ success: true, message: "Password updated successfully" });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Server Error: " + err.message });
+  }
 };
 
 // 6. Get All Voters

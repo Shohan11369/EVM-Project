@@ -6,6 +6,7 @@ import {
   getResults,
   adminLogin,
   getAllVoters,
+  adminResetPassword,
 } from "../controllers/voterController.js";
 
 const router = express.Router();
@@ -16,5 +17,8 @@ router.post("/vote", submitVote);
 router.get("/results", getResults);
 router.get("/all", getAllVoters); // Voter List Route
 router.post("/admin-login", adminLogin);
+
+//  NEW
+router.post("/admin-reset-password", adminResetPassword);
 
 export default router;
