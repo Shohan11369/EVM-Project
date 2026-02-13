@@ -30,15 +30,18 @@ function AdminDashboard() {
     let isMounted = true;
     const fetchResults = async () => {
       try {
+        // const res = await fetch(
+        //   `http://localhost:5000/api/voter/results?t=${new Date().getTime()}`
+        // );
         const res = await fetch(
-          `http://localhost:5000/api/voter/results?t=${new Date().getTime()}`
+          `https://evm-project-two.vercel.app/api/voter/results?t=${new Date().getTime()}`,
         );
         const result = await res.json();
         if (result.success && isMounted) {
           setData(result.results);
           const total = result.results.reduce(
             (acc, curr) => acc + curr.count,
-            0
+            0,
           );
           setTotalVotes(total);
         }
@@ -66,7 +69,8 @@ function AdminDashboard() {
             variant="h5"
             className="font-black text-gray-800 uppercase tracking-tight text-lg md:text-2xl"
           >
-            Election Results <span className="hidden sm:inline">(নির্বাচনী ফলাফল)</span>
+            Election Results{" "}
+            <span className="hidden sm:inline">(নির্বাচনী ফলাফল)</span>
           </Typography>
         </div>
 
@@ -118,11 +122,19 @@ function AdminDashboard() {
                     boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
                   }}
                 />
-                <Bar dataKey="count" radius={[10, 10, 0, 0]} barSize={window.innerWidth < 768 ? 40 : 80}>
+                <Bar
+                  dataKey="count"
+                  radius={[10, 10, 0, 0]}
+                  barSize={window.innerWidth < 768 ? 40 : 80}
+                >
                   <LabelList
                     dataKey="count"
                     position="top"
-                    style={{ fill: "#4b5563", fontWeight: "bold", fontSize: 12 }}
+                    style={{
+                      fill: "#4b5563",
+                      fontWeight: "bold",
+                      fontSize: 12,
+                    }}
                   />
                   {data.map((entry, index) => (
                     <Cell

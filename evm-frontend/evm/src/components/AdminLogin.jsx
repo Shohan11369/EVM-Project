@@ -23,7 +23,8 @@ function AdminLogin() {
     e.preventDefault();
     try {
       const response = await fetch(
-        "http://localhost:5000/api/voter/admin-login",
+        // "http://localhost:5000/api/voter/admin-login",
+        "https://evm-project-two.vercel.app/api/voter/admin-login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -54,7 +55,8 @@ function AdminLogin() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/voter/admin-reset-password",
+        // "http://localhost:5000/api/voter/admin-reset-password",
+        "https://evm-project-two.vercel.app/api/voter/admin-reset-password",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

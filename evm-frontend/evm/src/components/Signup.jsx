@@ -62,7 +62,8 @@ function Signup() {
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/address-data");
+        // const res = await fetch("http://localhost:5000/api/address-data");
+        const res = await fetch("https://evm-project-two.vercel.app/api/address-data");
         const data = await res.json();
         setAddressList(data);
       } catch (err) {
@@ -156,7 +157,8 @@ function Signup() {
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
       const capturedImage = canvas.toDataURL("image/jpeg");
 
-      const res = await fetch("http://localhost:5000/api/voter/register", {
+      // const res = await fetch("http://localhost:5000/api/voter/register", {
+      const res = await fetch("https://evm-project-two.vercel.app/api/voter/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

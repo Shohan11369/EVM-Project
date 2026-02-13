@@ -11,7 +11,8 @@ function VoterList() {
     const fetchVoters = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/voter/all?t=${new Date().getTime()}`
+          // `http://localhost:5000/api/voter/all?t=${new Date().getTime()}`
+          `https://evm-project-two.vercel.app/api/voter/all?t=${new Date().getTime()}`,
         );
         const data = await res.json();
         if (data.success && isMounted) setVoters(data.voters);
@@ -30,7 +31,7 @@ function VoterList() {
   const filteredVoters = voters.filter(
     (v) =>
       v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.voterId.includes(searchTerm.toUpperCase())
+      v.voterId.includes(searchTerm.toUpperCase()),
   );
 
   return (
