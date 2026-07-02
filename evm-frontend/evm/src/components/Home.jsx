@@ -51,7 +51,7 @@ function Home() {
 
       {/* Footer - Scaled down for small screens */}
       <div className="mt-12 md:mt-16 text-white/70 text-[10px] md:text-sm font-bold relative z-10 tracking-widest text-center">
-        © 2025 SMART EVM PROJECT | BANGLADESH
+        © {new Date().getFullYear()} SMART EVM PROJECT | BANGLADESH
       </div>
     </div>
   );
