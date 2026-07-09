@@ -65,6 +65,6 @@ The system aims to provide a transparent voting experience with enhanced securit
 
 ## 👨‍💻 Author
 
-**Shohan Sarker**  
+**Shohan Md Mizanur Rahman**  
 Bachelor of Information Technology (BIT) Student  
 Lincoln University College, Malaysia
